@@ -171,51 +171,51 @@ function LearnerBlock({ learner, t, showIdentity, periodBar = null }) {
                 <div className="min-w-0">
                     {periodBar}
                     <section className="sd-panel">
-                    <div className="sd-panel-head">
-                        <h2 className="sd-panel-title">
-                            <BooksIcon className="h-4 w-4 text-teal" />
-                            {t('rpt.family.latestResults')}
-                        </h2>
-                        {results ? (
-                            <span className="text-xs font-medium text-slate-500">
-                                {results.academic_year}
-                                {results.term ? ` · ${results.term}` : ''}
-                            </span>
-                        ) : null}
-                    </div>
-                    {!results ? (
-                        <p className="py-8 text-center text-sm text-slate-500">{t('rpt.family.emptyResults')}</p>
-                    ) : (
-                        <>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full text-sm">
-                                    <thead>
-                                        <tr className="text-xs uppercase tracking-wide text-slate-500">
-                                            <th className="px-2 py-2 text-start font-medium">{t('results.col.subject')}</th>
-                                            <th className="px-2 py-2 text-start font-medium">{t('results.col.ca')}</th>
-                                            <th className="px-2 py-2 text-start font-medium">{t('results.col.exam')}</th>
-                                            <th className="px-2 py-2 text-start font-medium">{t('results.col.total')}</th>
-                                            <th className="px-2 py-2 text-start font-medium">{t('rpt.col.grade')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {results.subjects.map((row) => (
-                                            <tr key={row.subject_id} className="border-t border-slate-100">
-                                                <td className="px-2 py-2.5 font-semibold text-navy">{row.name}</td>
-                                                <td className="px-2 py-2.5 tabular-nums">{row.ca_score ?? '—'}</td>
-                                                <td className="px-2 py-2.5 tabular-nums">{row.exam_score ?? '—'}</td>
-                                                <td className="px-2 py-2.5 tabular-nums font-semibold text-navy">{row.total ?? '—'}</td>
-                                                <td className="px-2 py-2.5">
-                                                    <GradeChip letter={row.grade} />
-                                                </td>
+                        <div className="sd-panel-head">
+                            <h2 className="sd-panel-title">
+                                <BooksIcon className="h-4 w-4 text-teal" />
+                                {t('rpt.family.latestResults')}
+                            </h2>
+                            {results ? (
+                                <span className="text-xs font-medium text-slate-500">
+                                    {results.academic_year}
+                                    {results.term ? ` · ${results.term}` : ''}
+                                </span>
+                            ) : null}
+                        </div>
+                        {!results ? (
+                            <p className="py-8 text-center text-sm text-slate-500">{t('rpt.family.emptyResults')}</p>
+                        ) : (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="text-xs uppercase tracking-wide text-slate-500">
+                                                <th className="px-2 py-2 text-start font-medium">{t('results.col.subject')}</th>
+                                                <th className="px-2 py-2 text-start font-medium">{t('results.col.ca')}</th>
+                                                <th className="px-2 py-2 text-start font-medium">{t('results.col.exam')}</th>
+                                                <th className="px-2 py-2 text-start font-medium">{t('results.col.total')}</th>
+                                                <th className="px-2 py-2 text-start font-medium">{t('rpt.col.grade')}</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {reports.length === 0 ? <p className="mt-3 text-sm text-slate-500">{t('rpt.family.waitingCard')}</p> : null}
-                        </>
-                    )}
+                                        </thead>
+                                        <tbody>
+                                            {results.subjects.map((row) => (
+                                                <tr key={row.subject_id} className="border-t border-slate-100">
+                                                    <td className="px-2 py-2.5 font-semibold text-navy">{row.name}</td>
+                                                    <td className="px-2 py-2.5 tabular-nums">{row.ca_score ?? '—'}</td>
+                                                    <td className="px-2 py-2.5 tabular-nums">{row.exam_score ?? '—'}</td>
+                                                    <td className="px-2 py-2.5 tabular-nums font-semibold text-navy">{row.total ?? '—'}</td>
+                                                    <td className="px-2 py-2.5">
+                                                        <GradeChip letter={row.grade} />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {reports.length === 0 ? <p className="mt-3 text-sm text-slate-500">{t('rpt.family.waitingCard')}</p> : null}
+                            </>
+                        )}
                     </section>
                 </div>
 
