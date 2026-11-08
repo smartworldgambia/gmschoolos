@@ -61,7 +61,7 @@ return new class extends Migration
             $table->unique(['school_id', 'reference']);
             $table->unique(['verification_token']);
             $table->index(['school_id', 'type', 'status']);
-            $table->index(['school_id', 'student_id', 'type', 'academic_year_id', 'term_id']);
+            $table->index(['school_id', 'student_id', 'type', 'academic_year_id', 'term_id'], 'academic_reports_student_period_index');
         });
 
         Schema::create('academic_report_events', function (Blueprint $table) {

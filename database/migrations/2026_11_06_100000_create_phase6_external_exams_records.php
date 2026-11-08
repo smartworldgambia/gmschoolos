@@ -15,19 +15,25 @@ return new class extends Migration
     public function up(): void
     {
         // ------------------------------------------------------------ structure needed by transcripts
-        Schema::table('levels', function (Blueprint $table) {
-            $table->unsignedTinyInteger('grade_number')->nullable()->after('code');
-        });
-        Schema::table('terms', function (Blueprint $table) {
-            $table->unsignedTinyInteger('sequence')->nullable()->after('name');
-        });
-        Schema::table('grades', function (Blueprint $table) {
-            $table->foreignId('level_id')->nullable()->after('term_id')->constrained('levels')->nullOnDelete();
-        });
+        if (! Schema::hasColumn('levels', 'grade_number')) {
+            Schema::table('levels', function (Blueprint $table) {
+                $table->unsignedTinyInteger('grade_number')->nullable()->after('code');
+            });
+        }
+        if (! Schema::hasColumn('terms', 'sequence')) {
+            Schema::table('terms', function (Blueprint $table) {
+                $table->unsignedTinyInteger('sequence')->nullable()->after('name');
+            });
+        }
+        if (! Schema::hasColumn('grades', 'level_id')) {
+            Schema::table('grades', function (Blueprint $table) {
+                $table->foreignId('level_id')->nullable()->after('term_id')->constrained('levels')->nullOnDelete();
+            });
+        }
         $this->backfillStructure();
 
         // ------------------------------------------------------------ external exams
-        Schema::create('external_exam_sessions', function (Blueprint $table) {
+        $this->createUnlessExists('external_exam_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->string('type', 10); // gabece | wassce
@@ -40,7 +46,7 @@ return new class extends Migration
             $table->unique(['school_id', 'type', 'exam_year']);
         });
 
-        Schema::create('external_exam_subjects', function (Blueprint $table) {
+        $this->createUnlessExists('external_exam_subjects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->string('exam_type', 10);
@@ -51,7 +57,7 @@ return new class extends Migration
             $table->unique(['school_id', 'exam_type', 'code']);
         });
 
-        Schema::create('external_candidates', function (Blueprint $table) {
+        $this->createUnlessExists('external_candidates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('session_id')->constrained('external_exam_sessions')->cascadeOnDelete();
@@ -74,7 +80,7 @@ return new class extends Migration
             $table->index(['school_id', 'status']);
         });
 
-        Schema::create('external_candidate_subjects', function (Blueprint $table) {
+        $this->createUnlessExists('external_candidate_subjects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('candidate_id')->constrained('external_candidates')->cascadeOnDelete();
@@ -83,7 +89,7 @@ return new class extends Migration
             $table->unique(['candidate_id', 'subject_id']);
         });
 
-        Schema::create('external_candidate_documents', function (Blueprint $table) {
+        $this->createUnlessExists('external_candidate_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('candidate_id')->constrained('external_candidates')->cascadeOnDelete();
@@ -96,7 +102,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('external_results', function (Blueprint $table) {
+        $this->createUnlessExists('external_results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('candidate_id')->constrained('external_candidates')->cascadeOnDelete();
@@ -115,7 +121,7 @@ return new class extends Migration
         });
 
         // Append-only: rows are never updated or deleted by application code.
-        Schema::create('external_result_changes', function (Blueprint $table) {
+        $this->createUnlessExists('external_result_changes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('candidate_id')->constrained('external_candidates')->cascadeOnDelete();
@@ -131,7 +137,7 @@ return new class extends Migration
         });
 
         // ------------------------------------------------------------ physical collection + certificates
-        Schema::create('result_collections', function (Blueprint $table) {
+        $this->createUnlessExists('result_collections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('candidate_id')->constrained('external_candidates')->cascadeOnDelete();
@@ -153,7 +159,7 @@ return new class extends Migration
             $table->index(['school_id', 'status']);
         });
 
-        Schema::create('certificate_records', function (Blueprint $table) {
+        $this->createUnlessExists('certificate_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('candidate_id')->constrained('external_candidates')->cascadeOnDelete();
@@ -176,7 +182,7 @@ return new class extends Migration
         });
 
         // ------------------------------------------------------------ Senior Secondary admissions
-        Schema::create('ss_rounds', function (Blueprint $table) {
+        $this->createUnlessExists('ss_rounds', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->string('name', 150);
@@ -193,7 +199,7 @@ return new class extends Migration
             $table->unique(['school_id', 'slug']);
         });
 
-        Schema::create('ss_applications', function (Blueprint $table) {
+        $this->createUnlessExists('ss_applications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('round_id')->constrained('ss_rounds')->cascadeOnDelete();
@@ -235,7 +241,7 @@ return new class extends Migration
             $table->index(['round_id', 'status']);
         });
 
-        Schema::create('ss_application_results', function (Blueprint $table) {
+        $this->createUnlessExists('ss_application_results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('application_id')->constrained('ss_applications')->cascadeOnDelete();
@@ -246,7 +252,7 @@ return new class extends Migration
             $table->unique(['application_id', 'subject_code']);
         });
 
-        Schema::create('ss_application_documents', function (Blueprint $table) {
+        $this->createUnlessExists('ss_application_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('application_id')->constrained('ss_applications')->cascadeOnDelete();
@@ -259,7 +265,7 @@ return new class extends Migration
         });
 
         // Append-only audit history of every automated and human step.
-        Schema::create('ss_application_events', function (Blueprint $table) {
+        $this->createUnlessExists('ss_application_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('application_id')->constrained('ss_applications')->cascadeOnDelete();
@@ -274,7 +280,7 @@ return new class extends Migration
         });
 
         // ------------------------------------------------------------ Records Office
-        Schema::create('student_term_records', function (Blueprint $table) {
+        $this->createUnlessExists('student_term_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
@@ -285,10 +291,15 @@ return new class extends Migration
             $table->string('source', 10)->default('manual'); // manual | import
             $table->foreignId('entered_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            $table->unique(['student_id', 'grade_number', 'term_sequence']);
+            $table->unique(['student_id', 'grade_number', 'term_sequence'], 'term_records_student_grade_term_uq');
         });
+        if (Schema::hasTable('student_term_records') && ! Schema::hasIndex('student_term_records', 'term_records_student_grade_term_uq')) {
+            Schema::table('student_term_records', function (Blueprint $table) {
+                $table->unique(['student_id', 'grade_number', 'term_sequence'], 'term_records_student_grade_term_uq');
+            });
+        }
 
-        Schema::create('records_templates', function (Blueprint $table) {
+        $this->createUnlessExists('records_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->string('type', 20); // testimonial | cover_letter | admission_letter
@@ -300,7 +311,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('records_documents', function (Blueprint $table) {
+        $this->createUnlessExists('records_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->string('type', 20); // transcript_g9 | transcript_g12 | testimonial | cover_letter | admission_letter
@@ -332,7 +343,7 @@ return new class extends Migration
         });
 
         // Append-only issuance register / audit trail.
-        Schema::create('records_document_events', function (Blueprint $table) {
+        $this->createUnlessExists('records_document_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('document_id')->constrained('records_documents')->cascadeOnDelete();
@@ -358,6 +369,13 @@ return new class extends Migration
         Schema::table('grades', fn (Blueprint $t) => $t->dropConstrainedForeignId('level_id'));
         Schema::table('terms', fn (Blueprint $t) => $t->dropColumn('sequence'));
         Schema::table('levels', fn (Blueprint $t) => $t->dropColumn('grade_number'));
+    }
+
+    private function createUnlessExists(string $table, \Closure $callback): void
+    {
+        if (! Schema::hasTable($table)) {
+            Schema::create($table, $callback);
+        }
     }
 
     /** Best-effort: derive grade numbers from level names ("Grade 7", "G7") and term order within a year. */
