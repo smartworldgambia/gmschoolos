@@ -125,7 +125,7 @@ const termsEn = [
     {
         heading: '10. Contact',
         body: [
-            'Questions about these Terms: use the Contact details on this website (Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia; Tel +220 877031891; info@gmschoolos.edu.gm).',
+            'Questions about these Terms: use the Contact details on this website (Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia; Tel +220 877031891; info@gambiaschoolos.com).',
         ],
     },
 ];
@@ -255,7 +255,7 @@ const termsFr = [
     {
         heading: '10. Contact',
         body: [
-            'Questions sur ces Conditions : utilisez les coordonnées Contact de ce site (Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia ; Tél +220 877031891 ; info@gmschoolos.edu.gm).',
+            'Questions sur ces Conditions : utilisez les coordonnées Contact de ce site (Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia ; Tél +220 877031891 ; info@gambiaschoolos.com).',
         ],
     },
 ];
@@ -385,7 +385,7 @@ const termsAr = [
     {
         heading: '10. الاتصال',
         body: [
-            'لأسئلة حول هذه الشروط: استخدم بيانات الاتصال في هذا الموقع (Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia؛ هاتف +220 877031891؛ info@gmschoolos.edu.gm).',
+            'لأسئلة حول هذه الشروط: استخدم بيانات الاتصال في هذا الموقع (Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia؛ هاتف +220 877031891؛ info@gambiaschoolos.com).',
         ],
     },
 ];

@@ -127,12 +127,12 @@ export default function Footer({ contact = {}, social = {}, tagline = '' }) {
                         <li className="whitespace-nowrap">
                             {t('footer.website')}:{' '}
                             <a
-                                href={contact.website || 'https://gmschoolos.edu.gm'}
+                                href={contact.website || 'https://gambiaschoolos.com'}
                                 className="hover:text-white"
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                {(contact.website || 'https://gmschoolos.edu.gm').replace(/^https?:\/\//, '')}
+                                {(contact.website || 'https://gambiaschoolos.com').replace(/^https?:\/\//, '')}
                             </a>
                         </li>
                         {contact.support_email && contact.support_email !== contact.email ? (

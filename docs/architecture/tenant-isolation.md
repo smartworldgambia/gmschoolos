@@ -27,8 +27,8 @@ A documented migration path to dedicated databases/clusters for high-volume tena
 
 ## Platform vs school admin
 
-- Central domain: SaaS marketing, school registration, platform console (production: `gmschoolos.edu.gm`).
-- School subdomain / custom domain: public school site + authenticated school portals (`{slug}.gmschoolos.edu.gm`).
+- Central domain: SaaS marketing, school registration, platform console (production: `gambiaschoolos.com`).
+- School subdomain / custom domain: public school site + authenticated school portals (`{slug}.gambiaschoolos.com`).
 - Cross-tenant access attempts must 404/403; automated tests cover guessed IDs and manipulated requests.
 
 ## Noisy-neighbour controls (progressive)

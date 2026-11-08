@@ -101,7 +101,7 @@ class LandingAndHealthTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Marketing/LegalPage')
                 ->where('document', 'privacy')
-                ->where('marketing.contact_email', 'info@gmschoolos.edu.gm')
+                ->where('marketing.contact_email', 'info@gambiaschoolos.com')
                 ->where('marketing.phone', '+220 877031891')
             );
 
@@ -121,7 +121,7 @@ class LandingAndHealthTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Marketing/Landing')
-                ->where('marketing.contact_email', 'info@gmschoolos.edu.gm')
+                ->where('marketing.contact_email', 'info@gambiaschoolos.com')
                 ->where('marketing.address', 'Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia')
             );
     }

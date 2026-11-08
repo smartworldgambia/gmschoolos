@@ -129,6 +129,7 @@ use App\Services\Platform\UsageRecorder;
 use App\Services\Reporting\ReportStoreRefresher;
 use App\Services\Scale\CacheTuner;
 use App\Support\TenantContext;
+use Database\Seeders\Concerns\DemoMailDomain;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -140,6 +141,8 @@ use Illuminate\Support\Str;
  */
 class DemoRichDataSeeder extends Seeder
 {
+    use DemoMailDomain;
+
     public function run(): void
     {
         $this->seedPlatformStaff();
@@ -166,22 +169,25 @@ class DemoRichDataSeeder extends Seeder
             app(TenantContext::class)->clear();
         }
 
+        $host = $this->demoMailHost();
         $this->command?->info('Demo logins (password for every demo account):');
-        $this->command?->info('  Platform:  platform@schoolos.test  finance@schoolos.test  support@schoolos.test  ops@schoolos.test  audit@schoolos.test');
-        $this->command?->info('  School:    admin@{slug}.test  head@{slug}.test  teacher@{slug}.test  finance@{slug}.test  hr@{slug}.test  student@{slug}.test  parent@{slug}.test');
+        $this->command?->info("  Platform:  platform@{$host}  finance@{$host}  support@{$host}  ops@{$host}  audit@{$host}");
+        $this->command?->info("  School:    admin@{slug}.{$host}  head@{slug}.{$host}  teacher@{slug}.{$host}  finance@{slug}.{$host}  hr@{slug}.{$host}  student@{slug}.{$host}  parent@{slug}.{$host}");
     }
 
     private function seedPlatformStaff(): void
     {
         $people = [
-            ['platform@schoolos.test', 'Platform Admin', 'platform_admin'],
-            ['finance@schoolos.test', 'Platform Finance', 'platform_finance'],
-            ['support@schoolos.test', 'Platform Support', 'platform_support'],
-            ['ops@schoolos.test', 'Platform Operations', 'platform_operations'],
-            ['audit@schoolos.test', 'Platform Auditor', 'platform_auditor'],
+            ['platform', 'Platform Admin', 'platform_admin'],
+            ['finance', 'Platform Finance', 'platform_finance'],
+            ['support', 'Platform Support', 'platform_support'],
+            ['ops', 'Platform Operations', 'platform_operations'],
+            ['audit', 'Platform Auditor', 'platform_auditor'],
         ];
 
-        foreach ($people as [$email, $name, $role]) {
+        foreach ($people as [$local, $name, $role]) {
+            $email = $this->demoPlatformEmail($local);
+            $this->relocateLoginEmail($local.'@schoolos.test', $email);
             $user = User::query()->updateOrCreate(
                 ['email' => $email],
                 [
@@ -197,7 +203,7 @@ class DemoRichDataSeeder extends Seeder
 
     private function seedPlatformBankAccount(): void
     {
-        $platform = User::query()->where('email', 'platform@schoolos.test')->first();
+        $platform = User::query()->where('email', $this->demoPlatformEmail('platform'))->first();
 
         PlatformBankAccount::query()->updateOrCreate(
             ['account_number' => '001-123456-01'],
@@ -216,7 +222,7 @@ class DemoRichDataSeeder extends Seeder
 
     private function seedSchool(School $school): void
     {
-        $domain = $school->slug.'.test';
+        $domain = $this->demoSchoolMailHost($school->slug);
         $prefix = strtoupper(substr(preg_replace('/[^a-z0-9]/i', '', $school->slug) ?: 'SCH', 0, 3));
 
         $users = $this->seedSpecialistUsers($school, $domain);
@@ -300,6 +306,10 @@ class DemoRichDataSeeder extends Seeder
                 'email_verified_at' => now(),
             ];
 
+            $this->relocateLoginEmail(
+                Str::before($email, '@').'@'.$school->slug.'.test',
+                $email
+            );
             $user = User::query()->firstOrCreate(['email' => $email], $payload);
             if (! $user->wasRecentlyCreated) {
                 $user->forceFill([
@@ -884,7 +894,7 @@ class DemoRichDataSeeder extends Seeder
 
                 $portalUserId = $isPrimaryStudent ? $studentUser->id : null;
                 if ($classmateLogin) {
-                    $domain = strstr($studentUser->email, '@') ?: '@brightfuture.test';
+                    $domain = strstr($studentUser->email, '@') ?: '@'.$this->demoSchoolMailHost('brightfuture');
                     $classmate = User::query()->updateOrCreate(
                         ['email' => strtolower($first).$domain],
                         [
@@ -2448,8 +2458,14 @@ class DemoRichDataSeeder extends Seeder
 
     private function seedInvitations(School $school, User $admin): void
     {
+        $inviteEmail = 'new.teacher@'.$this->demoSchoolMailHost($school->slug);
+        StaffInvitation::query()
+            ->where('school_id', $school->id)
+            ->where('email', 'new.teacher@'.$school->slug.'.test')
+            ->update(['email' => $inviteEmail]);
+
         StaffInvitation::query()->updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'new.teacher@'.$school->slug.'.test'],
+            ['school_id' => $school->id, 'email' => $inviteEmail],
             [
                 'kind' => 'staff',
                 'name' => 'Pending Teacher',
