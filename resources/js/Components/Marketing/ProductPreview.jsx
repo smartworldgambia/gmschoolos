@@ -11,7 +11,7 @@ function LaptopMock() {
                         <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                         <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
                         <span className="ml-2 flex-1 rounded-md bg-slate-100 px-2 py-1 text-[10px] text-slate-500">
-                            admin.gmschoolos.edu.gm/dashboard
+                            gambiaschoolos.com/admin
                         </span>
                     </div>
                     <div className="grid gap-3 bg-surface p-3 sm:grid-cols-[140px_1fr]">

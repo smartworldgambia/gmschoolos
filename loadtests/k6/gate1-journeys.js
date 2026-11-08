@@ -3,7 +3,7 @@ import { check, sleep } from 'k6';
 import { parseHTML } from 'k6/html';
 
 const BASE = __ENV.BASE_URL || 'http://127.0.0.1:8000';
-const EMAIL = __ENV.ADMIN_EMAIL || 'admin@brightfuture.test';
+const EMAIL = __ENV.ADMIN_EMAIL || 'admin@brightfuture.gambiaschoolos.com';
 const PASSWORD = __ENV.ADMIN_PASSWORD || 'password';
 
 export const options = {

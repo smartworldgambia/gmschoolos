@@ -33,11 +33,11 @@ Roadmap: [`docs/implementation-roadmap.md`](docs/implementation-roadmap.md)
 
 | Role | Email | Password |
 |------|-------|----------|
-| School admin | `admin@brightfuture.test` | `password` |
-| Teacher | `teacher@brightfuture.test` | `password` |
-| Student | `student@brightfuture.test` | `password` |
-| Platform admin | `platform@schoolos.test` | `password` |
-| Parent | `parent@brightfuture.test` | `password` |
+| School admin | `admin@brightfuture.gambiaschoolos.com` | `password` |
+| Teacher | `teacher@brightfuture.gambiaschoolos.com` | `password` |
+| Student | `student@brightfuture.gambiaschoolos.com` | `password` |
+| Platform admin | `platform@gambiaschoolos.com` | `password` |
+| Parent | `parent@brightfuture.gambiaschoolos.com` | `password` |
 
 Demo school public site: `/sites/brightfuture`
 
@@ -55,8 +55,8 @@ Demo school public site: `/sites/brightfuture`
 
 ## Configuration
 
-- `SCHOOLOS_CENTRAL_DOMAINS` — hosts for the SaaS marketing app (production: `gmschoolos.edu.gm`)
-- `SCHOOLOS_BASE_DOMAIN` — base domain for `{slug}.{base}` school hosts (production: `gmschoolos.edu.gm` → `{slug}.gmschoolos.edu.gm`)
+- `SCHOOLOS_CENTRAL_DOMAINS` — hosts for the SaaS marketing app (production: `gambiaschoolos.com`)
+- `SCHOOLOS_BASE_DOMAIN` — base domain for `{slug}.{base}` school hosts (production: `gambiaschoolos.com` → `{slug}.gambiaschoolos.com`)
 - Prefer Redis for cache/session/queue in production (see ADR-003)
 - Worker pools / autoscaling caps — see `config/schoolos.php` and `deploy/`
 

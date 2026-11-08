@@ -52,15 +52,18 @@ use App\Services\Platform\QuotaService;
 use App\Services\Platform\UsageRecorder;
 use App\Services\Reporting\ReportStoreRefresher;
 use App\Support\TenantContext;
+use Database\Seeders\Concerns\DemoMailDomain;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DemoSchoolSeeder extends Seeder
 {
+    use DemoMailDomain;
+
     public function run(): void
     {
-        $baseDomain = config('schoolos.base_domain', 'localhost');
+        $baseDomain = $this->demoMailHost();
 
         $school = School::query()->updateOrCreate(
             ['slug' => 'brightfuture'],
@@ -198,8 +201,10 @@ class DemoSchoolSeeder extends Seeder
 
         app(TenantContext::class)->set($school);
 
+        $schoolHost = $this->demoSchoolMailHost($school->slug);
+        $this->relocateLoginEmail('admin@brightfuture.test', 'admin@'.$schoolHost);
         $admin = User::query()->updateOrCreate(
-            ['email' => 'admin@brightfuture.test'],
+            ['email' => 'admin@'.$schoolHost],
             [
                 'school_id' => $school->id,
                 'name' => 'Mr. Lamin Jallow',
@@ -210,8 +215,9 @@ class DemoSchoolSeeder extends Seeder
         );
         $admin->syncRoles(['school_admin']);
 
+        $this->relocateLoginEmail('teacher@brightfuture.test', 'teacher@'.$schoolHost);
         $teacherUser = User::query()->updateOrCreate(
-            ['email' => 'teacher@brightfuture.test'],
+            ['email' => 'teacher@'.$schoolHost],
             [
                 'school_id' => $school->id,
                 'name' => 'Ms. Fatou Jallow',
@@ -223,7 +229,7 @@ class DemoSchoolSeeder extends Seeder
         $teacherUser->syncRoles(['teacher']);
 
         Staff::query()->updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'teacher@brightfuture.test'],
+            ['school_id' => $school->id, 'email' => 'teacher@'.$schoolHost],
             [
                 'user_id' => $teacherUser->id,
                 'staff_number' => 'TCH-001',
@@ -299,8 +305,9 @@ class DemoSchoolSeeder extends Seeder
         $math = $subjects->firstWhere('code', 'MATH');
         $eng = $subjects->firstWhere('code', 'ENG');
 
+        $this->relocateLoginEmail('student@brightfuture.test', 'student@'.$schoolHost);
         $studentUser = User::query()->updateOrCreate(
-            ['email' => 'student@brightfuture.test'],
+            ['email' => 'student@'.$schoolHost],
             [
                 'school_id' => $school->id,
                 'name' => 'Amadou Jallow',
@@ -310,8 +317,9 @@ class DemoSchoolSeeder extends Seeder
         );
         $studentUser->syncRoles(['student']);
 
+        $this->relocateLoginEmail('parent@brightfuture.test', 'parent@'.$schoolHost);
         $parentUser = User::query()->updateOrCreate(
-            ['email' => 'parent@brightfuture.test'],
+            ['email' => 'parent@'.$schoolHost],
             [
                 'school_id' => $school->id,
                 'name' => 'Parent Jallow',
@@ -858,8 +866,9 @@ class DemoSchoolSeeder extends Seeder
 
         app(ReportStoreRefresher::class)->refreshSchool($school->fresh());
 
+        $this->relocateLoginEmail('platform@schoolos.test', $this->demoPlatformEmail('platform'));
         User::query()->updateOrCreate(
-            ['email' => 'platform@schoolos.test'],
+            ['email' => $this->demoPlatformEmail('platform')],
             [
                 'school_id' => null,
                 'name' => 'Platform Admin',
@@ -889,7 +898,7 @@ class DemoSchoolSeeder extends Seeder
 
     private function demoClassmateUser(School $school, string $first, string $last, string $studentEmail): User
     {
-        $domain = strstr($studentEmail, '@') ?: '@brightfuture.test';
+        $domain = strstr($studentEmail, '@') ?: '@'.$this->demoSchoolMailHost('brightfuture');
         $user = User::query()->updateOrCreate(
             ['email' => strtolower($first).$domain],
             [

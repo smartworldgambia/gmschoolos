@@ -74,12 +74,12 @@ return [
         'support', 'help', 'docs', 'status', 'blog', 'news', 'billing', 'payments', 'pay',
         'platform', 'dashboard', 'login', 'logout', 'register', 'signup', 'signin', 'auth', 'oauth', 'sso',
         'demo', 'test', 'testing', 'staging', 'stage', 'dev', 'develop', 'beta', 'sandbox', 'preview',
-        'schoolos', 'gmschoolos', 'secure', 'ssl', 'vpn', 'webmail', 'cpanel', 'whm', 'localhost',
+        'schoolos', 'gmschoolos', 'gambiaschoolos', 'secure', 'ssl', 'vpn', 'webmail', 'cpanel', 'whm', 'localhost',
         'internal', 'system', 'sites', 'metrics', 'health', 'ready', 'up', 'xn',
     ],
 
     /*
-    | When true and SESSION_DOMAIN is shared (e.g. .gmschoolos.edu.gm), after
+    | When true and SESSION_DOMAIN is shared (e.g. .gambiaschoolos.com), after
     | school registration the admin is sent to https://{slug}.{base_domain}/admin.
     | Localhost / path installs stay on the central host admin dashboard.
     */
@@ -202,13 +202,13 @@ return [
     */
     'marketing' => [
         'tagline' => 'Simplifying School Management and Learning.',
-        'contact_email' => env('SCHOOLOS_CONTACT_EMAIL', 'info@gmschoolos.edu.gm'),
-        'demo_email' => env('SCHOOLOS_DEMO_EMAIL', env('SCHOOLOS_CONTACT_EMAIL', 'info@gmschoolos.edu.gm')),
-        'support_email' => env('SCHOOLOS_SUPPORT_EMAIL', env('SCHOOLOS_CONTACT_EMAIL', 'info@gmschoolos.edu.gm')),
+        'contact_email' => env('SCHOOLOS_CONTACT_EMAIL', 'info@gambiaschoolos.com'),
+        'demo_email' => env('SCHOOLOS_DEMO_EMAIL', env('SCHOOLOS_CONTACT_EMAIL', 'info@gambiaschoolos.com')),
+        'support_email' => env('SCHOOLOS_SUPPORT_EMAIL', env('SCHOOLOS_CONTACT_EMAIL', 'info@gambiaschoolos.com')),
         'phone' => env('SCHOOLOS_CONTACT_PHONE', '+220 877031891'),
         'phone_secondary' => env('SCHOOLOS_CONTACT_PHONE_2'),
         'address' => env('SCHOOLOS_CONTACT_ADDRESS', 'Smartworld, Opposite Netpage, Kairaba Avenue, The Gambia'),
-        'website' => env('SCHOOLOS_CONTACT_WEBSITE', 'https://gmschoolos.edu.gm'),
+        'website' => env('SCHOOLOS_CONTACT_WEBSITE', 'https://gambiaschoolos.com'),
         'social' => [
             'facebook' => env('SCHOOLOS_SOCIAL_FACEBOOK'),
             'twitter' => env('SCHOOLOS_SOCIAL_TWITTER'),
