@@ -1,0 +1,57 @@
+# Local git is not required to keep this file. GitHub runs it when the repo is pushed.
+# This environment has no git remote, so GitHub has not executed the workflow.
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: PHPUnit, i18n gates, frontend build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo_sqlite, gd, intl, ctype, fileinfo, tokenizer, xml
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Composer
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: PHPUnit
+        run: php artisan test
+
+      - name: i18n gates
+        run: |
+          node scripts/check-phase6-i18n.mjs
+          node scripts/check-phase7-i18n.mjs
+          node scripts/check-phase8-i18n.mjs
+          node scripts/check-phase9-i18n.mjs
+          node scripts/check-phase10-i18n.mjs
+
+      - name: Frontend build
+        run: |
+          npm ci
+          npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096

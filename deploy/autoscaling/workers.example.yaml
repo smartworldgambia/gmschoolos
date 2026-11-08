@@ -1,0 +1,35 @@
+# Example worker pool autoscaling. Scale on queue depth from GET /metrics.
+
+apiVersion: schoolos.scale/v1
+kind: WorkerPoolAutoscaling
+metadata:
+  name: schoolos-workers
+  labels:
+    project: schoolos
+    service: worker
+spec:
+  pools:
+    - name: critical
+      queues: [critical, default]
+      minReplicas: 1
+      maxReplicas: 4
+      scaleOutWhenPending: 50
+      sheddable: false
+    - name: imports
+      queues: [imports]
+      minReplicas: 0
+      maxReplicas: 2
+      scaleOutWhenPending: 20
+      sheddable: false
+    - name: bulk
+      queues: [exports, notifications, reports]
+      minReplicas: 0
+      maxReplicas: 2
+      scaleOutWhenPending: 100   # SCHOOLOS_AS_QUEUE_SCALE_OUT
+      sheddable: true            # pause first under overload
+  global:
+    workerMin: 1                 # SCHOOLOS_AS_WORKER_MIN
+    workerMax: 6                 # SCHOOLOS_AS_WORKER_MAX
+  probe:
+    url: /metrics
+    jsonPath: $.autoscaling.current_queue_depth
