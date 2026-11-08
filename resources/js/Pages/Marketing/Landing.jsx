@@ -2,6 +2,8 @@ import FeaturesGrid from '@/Components/Marketing/FeaturesGrid';
 import FinalCTA from '@/Components/Marketing/FinalCTA';
 import Footer from '@/Components/Marketing/Footer';
 import HeroSection from '@/Components/Marketing/HeroSection';
+import MobileBottomNav from '@/Components/Marketing/MobileBottomNav';
+import MobileQuickActions from '@/Components/Marketing/MobileQuickActions';
 import Navbar from '@/Components/Marketing/Navbar';
 import PricingSection from '@/Components/Marketing/PricingSection';
 import ProductPreview from '@/Components/Marketing/ProductPreview';
@@ -64,10 +66,10 @@ export default function Landing({
                 <meta head-key="twitter:card" name="twitter:card" content="summary_large_image" />
             </Head>
 
-            <div id="top" className="min-h-screen bg-surface">
+            <div id="top" className="min-h-screen bg-surface max-md:bg-[#F4F8FF] max-md:pb-[4.75rem]">
                 <Navbar loginUrl={loginUrl} registerUrl={registerUrl} />
 
-                <main>
+                <main className="max-md:overflow-x-clip">
                     <HeroSection
                         registerUrl={registerUrl}
                         demoUrl={demoUrl}
@@ -79,6 +81,8 @@ export default function Landing({
                         stats={illustrativeStats}
                         live={stats}
                     />
+
+                    <MobileQuickActions />
 
                     <FeaturesGrid />
 
@@ -103,6 +107,8 @@ export default function Landing({
                     social={marketing.social ?? {}}
                     tagline={marketing.tagline}
                 />
+
+                <MobileBottomNav />
             </div>
         </>
     );

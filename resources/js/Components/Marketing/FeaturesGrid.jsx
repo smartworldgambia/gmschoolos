@@ -16,9 +16,21 @@ export default function FeaturesGrid() {
     ];
 
     return (
-        <section className="bg-surface pb-16 pt-10 sm:pb-20 sm:pt-12" aria-labelledby="features-heading">
+        <section
+            id="features"
+            className="bg-surface pb-16 pt-10 sm:pb-20 sm:pt-12 max-md:bg-transparent max-md:pb-10 max-md:pt-2"
+            aria-label={t('features.label')}
+        >
             <div className="landing-container">
-                <div id="features" className="mx-auto max-w-2xl text-center">
+                <div className="lp-m-intro md:hidden">
+                    <p className="lp-m-intro-eyebrow">{t('features.label')}</p>
+                    <h2 id="features-heading-mobile" className="lp-m-intro-title">
+                        {t('features.mobileTitle')}
+                    </h2>
+                    <p className="lp-m-intro-copy">{t('features.mobileSubtitle')}</p>
+                </div>
+
+                <div id="features-desktop" className="mx-auto max-w-2xl text-center max-md:hidden">
                     <p className="landing-section-label">{t('features.label')}</p>
                     <h2 id="features-heading" className="mt-3 text-2xl font-extrabold text-navy sm:text-3xl">
                         {t('features.title')}
@@ -26,7 +38,7 @@ export default function FeaturesGrid() {
                     <p className="mt-3 text-sm text-brand-mute sm:text-base">{t('features.subtitle')}</p>
                 </div>
 
-                <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-md:mt-6">
                     {features.map((feature) => (
                         <FeatureCard key={feature.title} {...feature} />
                     ))}

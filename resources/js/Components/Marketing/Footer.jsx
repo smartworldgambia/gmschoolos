@@ -12,7 +12,7 @@ export default function Footer({ contact = {}, social = {}, tagline = '' }) {
     const socialLinks = safeLinks(social);
 
     return (
-        <footer className="bg-navy-600 text-slate-300" aria-labelledby="footer-heading">
+        <footer className="bg-navy-600 text-slate-300 max-md:pb-4" aria-labelledby="footer-heading">
             <div id="contact" className="landing-container grid gap-8 py-8 sm:grid-cols-2 lg:grid-cols-4 sm:py-10">
                 <div className="sm:col-span-2 lg:col-span-1">
                     <BrandLogo className="[&_span:last-child]:text-white" />

@@ -129,7 +129,7 @@ export default function HeroSlider({ slides = DEFAULT_SLIDES, autoPlayMs = 6000,
             onBlurCapture={(e) => {
                 if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false);
             }}
-            className="relative isolate min-h-[26rem] overflow-hidden bg-navy text-white outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-green sm:min-h-[28rem] lg:min-h-[32rem] xl:min-h-[34rem]"
+            className="lp-m-hero relative isolate min-h-[26rem] overflow-hidden bg-navy text-white outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-green sm:min-h-[28rem] lg:min-h-[32rem] xl:min-h-[34rem] max-md:min-h-[19.5rem]"
         >
             {/* Full-bleed slides */}
             <div className="absolute inset-0" aria-hidden="true">
@@ -161,7 +161,7 @@ export default function HeroSlider({ slides = DEFAULT_SLIDES, autoPlayMs = 6000,
 
             {/* Cinematic overlays: keep copy readable, let photography dominate the right */}
             <div
-                className="pointer-events-none absolute inset-0"
+                className="pointer-events-none absolute inset-0 max-md:hidden"
                 aria-hidden="true"
                 style={{
                     background: `
@@ -179,22 +179,23 @@ export default function HeroSlider({ slides = DEFAULT_SLIDES, autoPlayMs = 6000,
                 }}
             />
             <div
-                className="pointer-events-none absolute inset-0"
+                className="pointer-events-none absolute inset-0 max-md:hidden"
                 aria-hidden="true"
                 style={{
                     background:
                         'radial-gradient(ellipse 55% 50% at 16% 42%, rgba(16,185,165,0.22), transparent 60%), radial-gradient(ellipse 45% 40% at 90% 30%, rgba(22,131,248,0.18), transparent 55%)',
                 }}
             />
+            <div className="lp-m-hero-wash pointer-events-none absolute inset-0 md:hidden" aria-hidden="true" />
 
             {/* Overlay content */}
-            <div className="landing-container relative z-10 flex min-h-[26rem] flex-col justify-center py-10 sm:min-h-[28rem] sm:py-12 lg:min-h-[32rem] lg:py-14 xl:min-h-[34rem]">
-                <div className="max-w-xl">{children}</div>
+            <div className="landing-container relative z-10 flex min-h-[26rem] flex-col justify-center py-10 sm:min-h-[28rem] sm:py-12 lg:min-h-[32rem] lg:py-14 xl:min-h-[34rem] max-md:min-h-[19.5rem] max-md:justify-start max-md:pt-4 max-md:pb-[7.4rem]">
+                <div className="max-w-xl max-md:max-w-[18rem]">{children}</div>
 
                 {/* Slider chrome */}
                 {items.length > 1 && (
-                    <div className="mt-8 flex items-center justify-between gap-4 sm:mt-9">
-                        <div className="flex items-center gap-3" role="tablist" aria-label="Slide controls">
+                    <div className="lp-m-chrome mt-8 flex items-center justify-between gap-4 sm:mt-9">
+                        <div className="flex items-center gap-3 max-md:gap-2" role="tablist" aria-label="Slide controls">
                             {items.map((slide, i) => (
                                 <button
                                     key={slide.src}
@@ -202,20 +203,20 @@ export default function HeroSlider({ slides = DEFAULT_SLIDES, autoPlayMs = 6000,
                                     role="tab"
                                     aria-selected={i === index}
                                     aria-label={`Show slide ${i + 1}: ${slide.caption ?? slide.alt}`}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                                    className={`lp-m-dot h-1.5 rounded-full transition-all duration-300 ${
                                         i === index
-                                            ? 'w-10 bg-brand-green shadow-[0_0_12px_rgba(8,168,90,0.55)]'
+                                            ? 'is-on w-10 bg-brand-green shadow-[0_0_12px_rgba(8,168,90,0.55)]'
                                             : 'w-1.5 bg-white/45 hover:bg-white/80'
                                     }`}
                                     onClick={() => goTo(i)}
                                 />
                             ))}
-                            <span className="ml-2 hidden text-xs font-medium text-white/70 sm:inline">
+                            <span className="ml-2 hidden text-xs font-medium text-white/70 sm:inline max-md:!hidden">
                                 {String(index + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
                             </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 max-md:hidden">
                             <button
                                 type="button"
                                 className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-md transition hover:bg-white hover:text-navy focus-visible:ring-2 focus-visible:ring-brand-green"
@@ -238,6 +239,13 @@ export default function HeroSlider({ slides = DEFAULT_SLIDES, autoPlayMs = 6000,
                     </div>
                 )}
             </div>
+
+            <svg className="lp-m-ribbon md:hidden" viewBox="0 0 240 72" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M8 58 C 70 18, 140 28, 240 10" fill="none" stroke="#CE1126" strokeWidth="9" strokeLinecap="round" />
+                <path d="M8 50 C 70 10, 140 20, 240 2" fill="none" stroke="#0C47A1" strokeWidth="7" strokeLinecap="round" />
+                <path d="M8 44 C 70 4, 140 14, 240 -4" fill="none" stroke="#F9F9F9" strokeWidth="4" strokeLinecap="round" />
+                <path d="M8 38 C 70 -2, 140 8, 240 -10" fill="none" stroke="#3A7A28" strokeWidth="7" strokeLinecap="round" />
+            </svg>
 
             <p className="sr-only" aria-live="polite">
                 Slide {index + 1} of {items.length}
