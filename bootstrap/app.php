@@ -41,6 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Honour X-Forwarded-Host from Laravel Cloud / the edge so {slug}.gambiaschoolos.com
+        // is not rewritten to the apex before IdentifyTenant runs.
+        $middleware->trustProxies(at: '*');
         // Official examination index numbers are stored exactly as supplied: never silently trimmed.
         $middleware->trimStrings(except: ['official_index_number']);
         $middleware->web(append: [

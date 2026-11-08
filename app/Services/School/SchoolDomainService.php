@@ -518,20 +518,97 @@ class SchoolDomainService
     }
 
     /**
+     * Resolve the active school that should own this HTTP Host.
+     *
+     * Matches a domains row first. If the row still uses an old base domain (or is
+     * missing), {slug}.{base_domain} and {slug}.{live APP_URL / central host} still
+     * bind the school so platform subdomains never fall through to the SaaS landing.
+     */
+    public function schoolForHost(string $host): ?School
+    {
+        $host = $this->normalizeHost($host);
+        if ($host === '' || $this->isCentralHost($host)) {
+            return null;
+        }
+
+        $domain = Domain::query()->where('host', $host)->first();
+        if ($domain) {
+            if ($domain->is_custom && $domain->verified_at === null) {
+                return null;
+            }
+
+            $school = $domain->school;
+
+            return $school?->isActive() ? $school : null;
+        }
+
+        $slug = $this->platformSlugFromHost($host);
+        if ($slug === null) {
+            return null;
+        }
+
+        $school = School::query()->where('slug', $slug)->first();
+
+        return $school?->isActive() ? $school : null;
+    }
+
+    /**
      * Whether a TLS terminator may issue a certificate for this host (on-demand TLS "ask").
      */
     public function isHostServable(string $host): bool
     {
+        return $this->schoolForHost($host) !== null;
+    }
+
+    /**
+     * Single-label slug if this host is {slug}.{platform root}.
+     */
+    public function platformSlugFromHost(string $host): ?string
+    {
         $host = $this->normalizeHost($host);
-        if ($host === '') {
-            return false;
+
+        foreach ($this->platformRoots() as $root) {
+            $suffix = '.'.$root;
+            if ($host === $root || ! str_ends_with($host, $suffix)) {
+                continue;
+            }
+
+            $slug = substr($host, 0, -strlen($suffix));
+            if ($slug !== '' && ! str_contains($slug, '.') && preg_match('/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', $slug)) {
+                return $slug;
+            }
         }
 
-        return Domain::query()
-            ->where('host', $host)
-            ->whereNotNull('verified_at')
-            ->whereHas('school', fn ($q) => $q->where('status', 'active')->whereNull('suspended_at'))
-            ->exists();
+        return null;
+    }
+
+    /** @return list<string> */
+    protected function platformRoots(): array
+    {
+        $roots = [$this->baseDomain()];
+        $appHost = strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST));
+        if ($appHost !== '') {
+            $roots[] = $appHost;
+        }
+
+        foreach ((array) config('schoolos.central_domains', []) as $central) {
+            $central = strtolower(trim((string) $central));
+            if ($central !== '') {
+                $roots[] = $central;
+            }
+        }
+
+        return array_values(array_unique(array_filter($roots)));
+    }
+
+    public function isCentralHost(string $host): bool
+    {
+        $host = $this->normalizeHost($host);
+
+        return in_array($host, array_map(
+            static fn ($value) => strtolower(trim((string) $value)),
+            (array) config('schoolos.central_domains', [])
+        ), true);
     }
 
     /* ------------------------------------------------------------------ */
