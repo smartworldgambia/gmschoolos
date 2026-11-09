@@ -1,8 +1,8 @@
 import { assetUrl } from '@/lib/assetUrl';
-import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import SchoolAdmissionsSection from '@/Components/School/SchoolAdmissionsSection';
 import SchoolContactSection from '@/Components/School/SchoolContactSection';
 import SchoolHeroSlider from '@/Components/School/SchoolHeroSlider';
+import SchoolPublicHeader, { SchoolCrest } from '@/Components/School/SchoolPublicHeader';
 import { useLocale } from '@/i18n/LocaleProvider';
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -85,50 +85,6 @@ function FeatureIcon({ name }) {
     }
 }
 
-function SchoolCrest({ name, primary, accent }) {
-    return (
-        <span
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-soft"
-            style={{ backgroundColor: primary }}
-            aria-hidden="true"
-        >
-            <svg viewBox="0 0 40 40" className="h-8 w-8">
-                <path
-                    d="M20 4 8 10v10c0 7.2 4.8 12.2 12 13.5C27.2 32.2 32 27.2 32 20V10L20 4Z"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="1.8"
-                />
-                <path d="M20 8v22" stroke={accent || '#1683F8'} strokeWidth="1.4" />
-                <path d="M12 14.5 20 19l8-4.5" stroke="#FFFFFF" strokeWidth="1.3" fill="none" opacity="0.85" />
-                <text
-                    x="20"
-                    y="27"
-                    textAnchor="middle"
-                    fill="white"
-                    fontSize="9"
-                    fontWeight="700"
-                    fontFamily="Plus Jakarta Sans, sans-serif"
-                >
-                    {String(name || 'S').charAt(0).toUpperCase()}
-                </text>
-            </svg>
-        </span>
-    );
-}
-
-function MenuIcon({ open }) {
-    return (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            {open ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 18 18 6M6 6l12 12" />
-            ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7h16M4 12h16M4 17h16" />
-            )}
-        </svg>
-    );
-}
-
 export default function PublicSite({
     school,
     landing = {},
@@ -139,7 +95,6 @@ export default function PublicSite({
     contactUrl = null,
 }) {
     const { t } = useLocale();
-    const [menuOpen, setMenuOpen] = useState(false);
     const [activeKey, setActiveKey] = useState('home');
     const spyLock = useRef(0); // ignore scroll-spy while a nav click is smooth-scrolling
 
@@ -255,15 +210,6 @@ export default function PublicSite({
         return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    useEffect(() => {
-        if (!menuOpen) return undefined;
-        function onKey(e) {
-            if (e.key === 'Escape') setMenuOpen(false);
-        }
-        document.addEventListener('keydown', onKey);
-        return () => document.removeEventListener('keydown', onKey);
-    }, [menuOpen]);
-
     function pickSection(key) {
         spyLock.current = Date.now() + 900;
         setActiveKey(key);
@@ -324,121 +270,19 @@ export default function PublicSite({
             <Head title={name} />
 
             <div id="home" className="min-h-screen bg-surface font-sans text-brand-ink">
-                <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-nav backdrop-blur-md">
-                    <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:px-6 lg:gap-3">
-                        <a href="#home" className="flex min-w-0 shrink items-center gap-2.5 lg:max-w-[14rem] xl:max-w-[16rem]">
-                            {school?.logo_url || school?.logo_path ? (
-                                <img
-                                    src={assetUrl(school.logo_url ?? school.logo_path)}
-                                    alt=""
-                                    className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-soft"
-                                />
-                            ) : (
-                                <SchoolCrest name={name} primary={primary} accent={accent} />
-                            )}
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-extrabold tracking-tight text-navy">
-                                    {name}
-                                </p>
-                                <p className="truncate text-[10px] font-medium text-slate-500 sm:text-[11px]">
-                                    {tagline}
-                                </p>
-                            </div>
-                        </a>
-
-                        <nav
-                            className="ms-auto hidden min-w-0 flex-1 items-center justify-center gap-0.5 whitespace-nowrap xl:flex"
-                            aria-label={t('publicSite.navLabel')}
-                        >
-                            {NAV_KEYS.map((item) => (
-                                <a
-                                    key={item.key}
-                                    href={item.href}
-                                    aria-current={activeKey === item.key ? 'location' : undefined}
-                                    onClick={() => pickSection(item.key)}
-                                    className={`rounded-lg px-2 py-1.5 text-[13px] font-semibold transition hover:bg-surface hover:text-navy ${
-                                        activeKey === item.key ? 'bg-surface text-navy' : 'text-navy/80'
-                                    }`}
-                                >
-                                    {t(`publicSite.nav.${item.key}`)}
-                                </a>
-                            ))}
-                        </nav>
-
-                        <div className="ms-auto flex shrink-0 items-center gap-1.5 xl:ms-0">
-                            <LanguageSwitcher compact className="hidden sm:block" />
-                            <Link
-                                href={loginUrl}
-                                className="btn-outline !hidden !px-3 !py-2 text-xs lg:!inline-flex"
-                            >
-                                {t('publicSite.login')}
-                            </Link>
-                            <Link
-                                href={admissionsUrl}
-                                className="btn-navy !hidden !px-3 !py-2 text-xs sm:!inline-flex"
-                                style={{ backgroundColor: primary }}
-                            >
-                                {ctaApplyNow}
-                            </Link>
-                            <button
-                                type="button"
-                                className="inline-flex rounded-lg border border-slate-200 p-2 text-navy xl:hidden"
-                                aria-expanded={menuOpen}
-                                aria-controls="public-site-menu"
-                                aria-label={menuOpen ? t('publicSite.menuClose') : t('publicSite.menuOpen')}
-                                onClick={() => setMenuOpen((v) => !v)}
-                            >
-                                <MenuIcon open={menuOpen} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {menuOpen ? (
-                        <div
-                            id="public-site-menu"
-                            className="border-t border-slate-100 bg-white px-4 py-4 xl:hidden"
-                        >
-                            <div className="mb-3 flex items-center justify-between gap-2">
-                                <LanguageSwitcher />
-                            </div>
-                            <nav className="flex flex-col gap-1" aria-label={t('publicSite.navLabel')}>
-                                {NAV_KEYS.map((item) => (
-                                    <a
-                                        key={item.key}
-                                        href={item.href}
-                                        aria-current={activeKey === item.key ? 'location' : undefined}
-                                        className={`rounded-lg px-3 py-2.5 text-sm font-semibold text-navy hover:bg-surface ${
-                                            activeKey === item.key ? 'bg-surface' : ''
-                                        }`}
-                                        onClick={() => {
-                                            pickSection(item.key);
-                                            setMenuOpen(false);
-                                        }}
-                                    >
-                                        {t(`publicSite.nav.${item.key}`)}
-                                    </a>
-                                ))}
-                            </nav>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <Link
-                                    href={loginUrl}
-                                    className="btn-outline !px-3 !py-2 text-xs"
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {t('publicSite.login')}
-                                </Link>
-                                <Link
-                                    href={admissionsUrl}
-                                    className="btn-navy !px-3 !py-2 text-xs"
-                                    style={{ backgroundColor: primary }}
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {ctaApplyNow}
-                                </Link>
-                            </div>
-                        </div>
-                    ) : null}
-                </header>
+                <SchoolPublicHeader
+                    school={school}
+                    name={name}
+                    tagline={tagline}
+                    primary={primary}
+                    accent={accent}
+                    items={NAV_KEYS}
+                    activeKey={activeKey}
+                    onPickSection={pickSection}
+                    loginUrl={loginUrl}
+                    admissionsUrl={admissionsUrl}
+                    applyLabel={ctaApplyNow}
+                />
 
                 <SchoolHeroSlider slides={heroSlides}>
                     <div className="rounded-3xl border border-white/30 bg-navy/35 p-6 text-white shadow-card backdrop-blur-md sm:p-8 lg:p-10">
