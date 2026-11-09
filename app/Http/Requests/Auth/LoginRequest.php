@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
+use App\Support\DemoLoginCatalog;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,7 +44,22 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $email = strtolower(trim((string) $this->input('email')));
+        $password = (string) $this->input('password');
+        $remember = $this->boolean('remember');
+
+        $authenticated = Auth::attempt(['email' => $email, 'password' => $password], $remember);
+
+        if (! $authenticated && ! User::query()->where('email', $email)->exists()) {
+            foreach (DemoLoginCatalog::aliasesFor($email) as $alias) {
+                if (Auth::attempt(['email' => $alias, 'password' => $password], $remember)) {
+                    $authenticated = true;
+                    break;
+                }
+            }
+        }
+
+        if (! $authenticated) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

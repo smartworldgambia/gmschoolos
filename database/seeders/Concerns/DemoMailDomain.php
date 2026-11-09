@@ -2,43 +2,28 @@
 
 namespace Database\Seeders\Concerns;
 
-use App\Models\Staff;
-use App\Models\User;
-use Illuminate\Support\Facades\Schema;
+use App\Services\Demo\DemoLoginProvisioner;
+use App\Support\DemoLoginCatalog;
 
 trait DemoMailDomain
 {
     protected function demoMailHost(): string
     {
-        $host = trim((string) config('schoolos.base_domain', 'gambiaschoolos.com'));
-
-        return in_array($host, ['', 'localhost', '127.0.0.1'], true)
-            ? 'gambiaschoolos.com'
-            : $host;
+        return DemoLoginCatalog::mailHost();
     }
 
     protected function demoPlatformEmail(string $localPart): string
     {
-        return $localPart.'@'.$this->demoMailHost();
+        return DemoLoginCatalog::platformEmail($localPart);
     }
 
     protected function demoSchoolMailHost(string $slug): string
     {
-        return $slug.'.'.$this->demoMailHost();
+        return DemoLoginCatalog::schoolMailHost($slug);
     }
 
     protected function relocateLoginEmail(string $from, string $to): void
     {
-        if ($from === '' || $from === $to) {
-            return;
-        }
-
-        if (! User::query()->where('email', $to)->exists()) {
-            User::query()->where('email', $from)->update(['email' => $to]);
-        }
-
-        if (Schema::hasTable('staff') && ! Staff::query()->where('email', $to)->exists()) {
-            Staff::query()->where('email', $from)->update(['email' => $to]);
-        }
+        app(DemoLoginProvisioner::class)->relocateLoginEmail($from, $to);
     }
 }
