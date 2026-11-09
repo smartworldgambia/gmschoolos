@@ -156,7 +156,7 @@ export default function SchoolHeroSlider({
                 aria-hidden="true"
             />
 
-            <div className="relative z-10 mx-auto flex min-h-[33.88rem] max-w-6xl items-center px-4 py-12 pb-24 sm:min-h-[38.72rem] sm:px-6 sm:pb-28 lg:min-h-[43.56rem] lg:py-16">
+            <div className="relative z-10 mx-auto flex min-h-[min(36rem,calc(100svh-4.25rem))] max-w-6xl items-center px-4 py-12 pb-24 sm:px-6 sm:pb-28 lg:py-16">
                 <div className="w-full max-w-xl">{children}</div>
             </div>
 

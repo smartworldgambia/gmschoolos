@@ -269,7 +269,7 @@ export default function PublicSite({
         <>
             <Head title={name} />
 
-            <div id="home" className="min-h-screen bg-surface font-sans text-brand-ink">
+            <div id="home" className="min-h-screen bg-surface font-sans text-brand-ink [-webkit-text-size-adjust:100%] [text-size-adjust:100%]">
                 <SchoolPublicHeader
                     school={school}
                     name={name}
