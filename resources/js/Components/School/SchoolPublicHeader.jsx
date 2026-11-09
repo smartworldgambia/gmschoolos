@@ -108,7 +108,7 @@ export function SchoolCrest({ name, primary, accent, className = 'h-10 w-10' }) 
 
 function BrandMark({ school, name, tagline, primary, accent, onClick, showTagline = true }) {
     return (
-        <a href="#home" onClick={onClick} className="flex min-w-0 items-center gap-2.5 lg:max-w-[16rem]">
+        <a href="#home" onClick={onClick} className="flex min-w-0 shrink-0 items-center gap-2 md:max-w-[11rem] lg:max-w-[16rem]">
             {school?.logo_url || school?.logo_path ? (
                 <img
                     src={assetUrl(school.logo_url ?? school.logo_path)}
@@ -121,7 +121,7 @@ function BrandMark({ school, name, tagline, primary, accent, onClick, showTaglin
             <span className="min-w-0">
                 <span className="block truncate text-sm font-extrabold tracking-tight text-navy">{name}</span>
                 {showTagline ? (
-                    <span className="block truncate text-[10px] font-medium text-slate-500 sm:text-[11px]">{tagline}</span>
+                    <span className="hidden truncate text-[10px] font-medium text-slate-500 lg:block">{tagline}</span>
                 ) : null}
             </span>
         </a>
@@ -163,7 +163,7 @@ export default function SchoolPublicHeader({
     }, [menuOpen]);
 
     useEffect(() => {
-        const mq = window.matchMedia('(min-width: 1024px)');
+        const mq = window.matchMedia('(min-width: 768px)');
         const sync = () => {
             if (mq.matches) setMenuOpen(false);
         };
@@ -179,7 +179,7 @@ export default function SchoolPublicHeader({
     const drawer =
         menuOpen && typeof document !== 'undefined'
             ? createPortal(
-                  <div className="lg:hidden" role="presentation">
+                  <div className="md:hidden" role="presentation">
                       <button
                           type="button"
                           className="fixed inset-0 z-[60] bg-navy/45 backdrop-blur-[2px]"
@@ -294,11 +294,11 @@ export default function SchoolPublicHeader({
     return (
         <>
             <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-nav backdrop-blur-md">
-                <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center gap-3 px-4 sm:px-6">
+                <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:h-[4.25rem] sm:gap-3 sm:px-6">
                     <BrandMark school={school} name={name} tagline={tagline} primary={primary} accent={accent} onClick={() => onPickSection?.('home')} />
 
                     <nav
-                        className="ms-auto hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex"
+                        className="ms-2 hidden min-w-0 flex-1 items-center justify-center md:flex"
                         aria-label={t('publicSite.navLabel')}
                     >
                         {items.map((item) => {
@@ -309,14 +309,14 @@ export default function SchoolPublicHeader({
                                     href={item.href}
                                     aria-current={active ? 'location' : undefined}
                                     onClick={() => onPickSection?.(item.key)}
-                                    className={`relative whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] font-semibold transition hover:text-navy xl:px-3 ${
+                                    className={`relative shrink-0 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[12px] font-semibold transition hover:text-navy lg:px-2.5 lg:text-[13px] xl:px-3 ${
                                         active ? 'text-navy' : 'text-navy/70'
                                     }`}
                                 >
                                     {t(`publicSite.nav.${item.key}`)}
                                     {active ? (
                                         <span
-                                            className="absolute inset-x-2 -bottom-0.5 h-0.5 rounded-full"
+                                            className="absolute inset-x-1.5 -bottom-0.5 h-0.5 rounded-full lg:inset-x-2"
                                             style={{ backgroundColor: primary }}
                                             aria-hidden="true"
                                         />
@@ -326,21 +326,21 @@ export default function SchoolPublicHeader({
                         })}
                     </nav>
 
-                    <div className="ms-auto flex shrink-0 items-center gap-1.5 lg:ms-0">
+                    <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-1.5 md:ms-0">
                         <LanguageSwitcher compact />
                         <Link href={loginUrl} className="btn-outline !hidden !px-3 !py-2 text-xs lg:!inline-flex">
                             {t('publicSite.login')}
                         </Link>
                         <Link
                             href={admissionsUrl}
-                            className="btn-navy !hidden !px-3 !py-2 text-xs lg:!inline-flex"
+                            className="btn-navy !hidden !px-3 !py-2 text-xs md:!inline-flex"
                             style={{ backgroundColor: primary }}
                         >
                             {applyLabel}
                         </Link>
                         <button
                             type="button"
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-navy shadow-[0_8px_22px_rgba(8,38,91,0.08)] lg:hidden"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-navy shadow-[0_8px_22px_rgba(8,38,91,0.08)] md:hidden"
                             aria-expanded={menuOpen}
                             aria-controls="public-site-menu"
                             aria-label={menuOpen ? t('publicSite.menuClose') : t('publicSite.menuOpen')}
