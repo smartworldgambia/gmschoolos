@@ -54,7 +54,6 @@ use App\Services\Reporting\ReportStoreRefresher;
 use App\Support\TenantContext;
 use Database\Seeders\Concerns\DemoMailDomain;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DemoSchoolSeeder extends Seeder
@@ -209,7 +208,7 @@ class DemoSchoolSeeder extends Seeder
                 'school_id' => $school->id,
                 'name' => 'Mr. Lamin Jallow',
                 'phone' => '+220 3000001',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'email_verified_at' => now(),
             ]
         );
@@ -222,7 +221,7 @@ class DemoSchoolSeeder extends Seeder
                 'school_id' => $school->id,
                 'name' => 'Ms. Fatou Jallow',
                 'phone' => '+220 3000002',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'email_verified_at' => now(),
             ]
         );
@@ -311,7 +310,7 @@ class DemoSchoolSeeder extends Seeder
             [
                 'school_id' => $school->id,
                 'name' => 'Amadou Jallow',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'email_verified_at' => now(),
             ]
         );
@@ -323,7 +322,7 @@ class DemoSchoolSeeder extends Seeder
             [
                 'school_id' => $school->id,
                 'name' => 'Parent Jallow',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'email_verified_at' => now(),
             ]
         );
@@ -872,7 +871,7 @@ class DemoSchoolSeeder extends Seeder
             [
                 'school_id' => null,
                 'name' => 'Platform Admin',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'email_verified_at' => now(),
             ]
         )->syncRoles(['platform_admin']);
@@ -904,7 +903,7 @@ class DemoSchoolSeeder extends Seeder
             [
                 'school_id' => $school->id,
                 'name' => $first.' '.$last,
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'email_verified_at' => now(),
             ]
         );

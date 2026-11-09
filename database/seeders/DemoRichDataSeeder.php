@@ -128,6 +128,7 @@ use App\Models\VehicleMaintenance;
 use App\Services\Platform\UsageRecorder;
 use App\Services\Reporting\ReportStoreRefresher;
 use App\Services\Scale\CacheTuner;
+use App\Services\Demo\DemoLoginProvisioner;
 use App\Support\TenantContext;
 use Database\Seeders\Concerns\DemoMailDomain;
 use Illuminate\Database\Seeder;
@@ -177,28 +178,7 @@ class DemoRichDataSeeder extends Seeder
 
     private function seedPlatformStaff(): void
     {
-        $people = [
-            ['platform', 'Platform Admin', 'platform_admin'],
-            ['finance', 'Platform Finance', 'platform_finance'],
-            ['support', 'Platform Support', 'platform_support'],
-            ['ops', 'Platform Operations', 'platform_operations'],
-            ['audit', 'Platform Auditor', 'platform_auditor'],
-        ];
-
-        foreach ($people as [$local, $name, $role]) {
-            $email = $this->demoPlatformEmail($local);
-            $this->relocateLoginEmail($local.'@schoolos.test', $email);
-            $user = User::query()->updateOrCreate(
-                ['email' => $email],
-                [
-                    'school_id' => null,
-                    'name' => $name,
-                    'password' => 'password',
-                    'email_verified_at' => now(),
-                ]
-            );
-            $user->syncRoles([$role]);
-        }
+        app(DemoLoginProvisioner::class)->ensurePlatform();
     }
 
     private function seedPlatformBankAccount(): void
@@ -274,57 +254,7 @@ class DemoRichDataSeeder extends Seeder
             ->orderBy('id')
             ->first();
 
-        $directory = [
-            'school_admin' => ['admin@'.$domain, 'School Administrator', 'school_admin', '+220 3000101'],
-            'headteacher' => ['head@'.$domain, 'Haddy Njie', 'headteacher', '+220 3000102'],
-            'deputy_headteacher' => ['deputy@'.$domain, 'Ousman Ceesay', 'deputy_headteacher', '+220 3000103'],
-            'academic_coordinator' => ['academics@'.$domain, 'Isatou Sowe', 'academic_coordinator', '+220 3000104'],
-            'head_of_department' => ['hod@'.$domain, 'Modou Bah', 'head_of_department', '+220 3000105'],
-            'teacher' => ['teacher@'.$domain, 'Fatou Jallow', 'teacher', '+220 3000106'],
-            'teacher_b' => ['teacher2@'.$domain, 'Musa Touray', 'class_teacher', '+220 3000107'],
-            'teacher_c' => ['teacher3@'.$domain, 'Awa Camara', 'teacher', '+220 3000108'],
-            'exam_officer' => ['exam@'.$domain, 'Kebba Jallow', 'exam_officer', '+220 3000109'],
-            'admissions_officer' => ['admissions@'.$domain, 'Satang Colley', 'admissions_officer', '+220 3000110'],
-            'finance_officer' => ['finance@'.$domain, 'Binta Sanyang', 'finance_officer', '+220 3000111'],
-            'accountant' => ['accountant@'.$domain, 'Lamin Darboe', 'accountant', '+220 3000112'],
-            'records_officer' => ['records@'.$domain, 'Mariama Bojang', 'records_officer', '+220 3000113'],
-            'librarian' => ['library@'.$domain, 'Ya Sohna', 'librarian', '+220 3000114'],
-            'hr_officer' => ['hr@'.$domain, 'Ebrima Manneh', 'hr_officer', '+220 3000115'],
-            'storekeeper' => ['store@'.$domain, 'Omar Kinteh', 'storekeeper', '+220 3000116'],
-            'transport_officer' => ['transport@'.$domain, 'Alhagie Sillah', 'transport_officer', '+220 3000117'],
-            'student' => ['student@'.$domain, 'Amadou Jallow', 'student', '+220 3000118'],
-            'parent' => ['parent@'.$domain, 'Parent Jallow', 'parent', '+220 3000119'],
-        ];
-
-        $users = [];
-        foreach ($directory as $key => [$email, $name, $role, $phone]) {
-            $payload = [
-                'school_id' => $school->id,
-                'name' => $name,
-                'phone' => $phone,
-                'password' => 'password',
-                'email_verified_at' => now(),
-            ];
-
-            $this->relocateLoginEmail(
-                Str::before($email, '@').'@'.$school->slug.'.test',
-                $email
-            );
-            $user = User::query()->firstOrCreate(['email' => $email], $payload);
-            if (! $user->wasRecentlyCreated) {
-                $user->forceFill([
-                    'school_id' => $school->id,
-                    'password' => 'password',
-                    'email_verified_at' => $user->email_verified_at ?? now(),
-                ])->save();
-            }
-            $user->syncRoles([$role === 'teacher_b' ? 'class_teacher' : $role]);
-            $users[$key] = $user;
-        }
-
-        if ($school->slug === 'brightfuture' && isset($users['school_admin'])) {
-            $users['school_admin']->forceFill(['name' => 'Mr. Lamin Jallow'])->save();
-        }
+        $users = app(DemoLoginProvisioner::class)->ensureSchool($school);
 
         // Keep a live-registered owner as the acting admin for seeded FKs; never overwrite that password.
         if ($existingAdmin && $existingAdmin->email !== 'admin@'.$domain) {

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Services\Demo\DemoLoginProvisioner;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,5 +16,7 @@ class DatabaseSeeder extends Seeder
             MarketingSeeder::class,
             LandingMediaSeeder::class,
         ]);
+
+        app(DemoLoginProvisioner::class)->sync();
     }
 }

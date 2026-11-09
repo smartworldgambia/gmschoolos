@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\DemoLoginCatalog;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,9 +19,11 @@ class EnsureTwoFactorVerified
 
         // Privileged roles must enrol in 2FA before using anything else (enforced when configured;
         // on by default in production - see schoolos.security.require_two_factor_privileged).
+        // Seeded demo directory accounts stay usable without a TOTP enrolment.
         if (! $user->hasTwoFactorEnabled()
             && config('schoolos.security.require_two_factor_privileged')
             && $user->requiresTwoFactor()
+            && ! DemoLoginCatalog::isDemoEmail((string) $user->email)
             && ! $request->routeIs('two-factor.*', 'logout', 'verification.*', 'password.*')
         ) {
             return redirect()->route('two-factor.settings')
