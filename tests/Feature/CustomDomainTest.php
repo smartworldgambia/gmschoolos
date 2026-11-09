@@ -661,4 +661,57 @@ class CustomDomainTest extends TestCase
             ->post(route('platform.schools.domains.store', $this->school), ['host' => 'schoolos.test'])
             ->assertSessionHasErrors('host');
     }
+
+    public function test_stale_localhost_platform_host_is_replaced_with_the_live_school_url(): void
+    {
+        config([
+            'app.url' => 'https://gambiaschoolos.com',
+            'schoolos.base_domain' => 'localhost',
+            'schoolos.central_domains' => ['gambiaschoolos.com', 'www.gambiaschoolos.com'],
+        ]);
+
+        Domain::query()->where('school_id', $this->school->id)->update([
+            'host' => 'alpha.localhost',
+            'is_custom' => false,
+            'is_primary' => true,
+        ]);
+
+        $urls = $this->service()->urlsFor($this->school->fresh('domains'));
+        $this->assertSame('alpha.gambiaschoolos.com', $urls['platform_host']);
+        $this->assertSame('alpha.gambiaschoolos.com', $urls['primary_host']);
+        $this->assertSame('https://alpha.gambiaschoolos.com/', $urls['primary_url']);
+
+        $this->service()->assignPlatformDomain($this->school->fresh('domains'));
+
+        $this->assertDatabaseHas('domains', [
+            'school_id' => $this->school->id,
+            'host' => 'alpha.gambiaschoolos.com',
+            'is_primary' => true,
+        ]);
+        $this->assertDatabaseMissing('domains', ['host' => 'alpha.localhost']);
+    }
+
+    public function test_admin_dashboard_shows_the_live_school_host_not_localhost(): void
+    {
+        config([
+            'app.url' => 'https://gambiaschoolos.com',
+            'schoolos.base_domain' => 'localhost',
+            'schoolos.central_domains' => ['gambiaschoolos.com', 'www.gambiaschoolos.com'],
+        ]);
+
+        Domain::query()->where('school_id', $this->school->id)->update([
+            'host' => 'alpha.localhost',
+            'is_custom' => false,
+            'is_primary' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Dashboard')
+                ->where('schoolUrls.primary_host', 'alpha.gambiaschoolos.com')
+                ->where('schoolUrls.platform_host', 'alpha.gambiaschoolos.com')
+                ->where('schoolUrls.primary_url', 'https://alpha.gambiaschoolos.com/'));
+    }
 }

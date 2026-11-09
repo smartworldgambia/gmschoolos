@@ -33,7 +33,17 @@ class SchoolDomainService
 
     public function baseDomain(): string
     {
-        return strtolower((string) config('schoolos.base_domain', 'localhost'));
+        $configured = strtolower(trim((string) config('schoolos.base_domain', 'gambiaschoolos.com')));
+        if ($this->isUsablePublicRoot($configured)) {
+            return $configured;
+        }
+
+        $appHost = $this->appUrlHost();
+        if ($this->isUsablePublicRoot($appHost)) {
+            return $appHost;
+        }
+
+        return $configured !== '' ? $configured : 'gambiaschoolos.com';
     }
 
     public function platformHost(School $school): string
@@ -104,6 +114,7 @@ class SchoolDomainService
      */
     public function assignPlatformDomain(School $school): Domain
     {
+        $this->relocateStalePlatformHosts($school);
         $host = $this->platformHost($school);
 
         $canonical = Domain::query()->where('host', $host)->first();
@@ -129,6 +140,43 @@ class SchoolDomainService
         }
 
         return $canonical->fresh();
+    }
+
+    /**
+     * Move leftover platform hosts ({slug}.localhost, {slug}.gmschoolos.edu.gm, …)
+     * onto the live {slug}.{public base} row so dashboards never show a dead URL.
+     */
+    public function relocateStalePlatformHosts(School $school): void
+    {
+        $canonical = $this->platformHost($school);
+        $slug = strtolower($school->slug);
+
+        $stale = Domain::query()
+            ->where('school_id', $school->id)
+            ->where('is_custom', false)
+            ->where('host', '!=', $canonical)
+            ->get();
+
+        foreach ($stale as $domain) {
+            if (! $this->isLegacyPlatformHost((string) $domain->host, $slug)) {
+                continue;
+            }
+
+            $existing = Domain::query()->where('host', $canonical)->first();
+            if ($existing) {
+                if ((int) $existing->school_id === (int) $school->id) {
+                    $wasPrimary = (bool) $domain->is_primary;
+                    $domain->delete();
+                    if ($wasPrimary && ! $existing->is_custom) {
+                        $this->makePrimary($existing);
+                    }
+                }
+
+                continue;
+            }
+
+            $domain->update(['host' => $canonical]);
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -750,19 +798,22 @@ class SchoolDomainService
         $primary = $school->domains->firstWhere('is_primary', true)
             ?? $school->domains->firstWhere('host', $platformHost);
 
-        $primaryHost = $primary?->host ?? $platformHost;
+        $primaryIsCustom = (bool) ($primary?->is_custom);
+        $storedHost = $primary?->host ?? $platformHost;
+        $primaryHost = ($primaryIsCustom || $storedHost === $platformHost)
+            ? $storedHost
+            : $platformHost;
         $pathUrl = route('school.site', ['school_slug' => $school->slug]);
         $usesPathPreview = $this->preferPathPreview();
 
         // Canonical platform URL is always the dedicated subdomain (path fallback only on localhost base).
         $platformUrl = $this->isLocalBase()
             ? $pathUrl
-            : $this->absoluteUrl($platformHost, '/');
+            : $this->absoluteUrl($platformHost, '/', true);
 
-        $primaryIsCustom = (bool) ($primary?->is_custom);
         $primaryUrl = $primaryIsCustom
             ? $this->absoluteUrl($primaryHost, '/', $primary->ssl_active ? true : null)
-            : ($usesPathPreview ? $pathUrl : $platformUrl);
+            : ($this->isLocalBase() ? $pathUrl : $platformUrl);
 
         // Admin stays on a host that is guaranteed to serve TLS until the custom certificate is live.
         $adminHost = ($primaryIsCustom && $primary->ssl_active) ? $primaryHost : $platformHost;
@@ -850,5 +901,41 @@ class SchoolDomainService
     protected function isLocalBase(): bool
     {
         return in_array($this->baseDomain(), ['localhost', '127.0.0.1'], true);
+    }
+
+    protected function appUrlHost(): string
+    {
+        $host = strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST));
+
+        return preg_replace('/^www\./', '', $host) ?: '';
+    }
+
+    protected function isUsablePublicRoot(string $host): bool
+    {
+        $host = strtolower(trim($host));
+
+        if ($host === '' || in_array($host, ['localhost', '127.0.0.1', 'gmschoolos.edu.gm'], true)) {
+            return false;
+        }
+
+        return ! str_ends_with($host, '.localhost');
+    }
+
+    protected function isLegacyPlatformHost(string $host, string $slug): bool
+    {
+        $host = $this->normalizeHost($host);
+        $roots = array_unique(array_merge(
+            ['localhost', '127.0.0.1', 'schoolos.test', 'gmschoolos.edu.gm', 'gambiaschoolos.com'],
+            $this->platformRoots(),
+        ));
+
+        foreach ($roots as $root) {
+            $root = strtolower(trim((string) $root));
+            if ($root !== '' && $host === $slug.'.'.$root) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

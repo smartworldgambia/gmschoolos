@@ -99,9 +99,24 @@ class RegisterSchoolTest extends TestCase
             ->component('Onboarding/RegisterSchool')
             ->has('prices.Primary.label')
             ->where('preselectedCategory', 'Primary')
-            ->where('baseDomain', config('schoolos.base_domain'))
+            ->where('baseDomain', app(\App\Services\School\SchoolDomainService::class)->baseDomain())
             ->has('categories', 7)
             ->where('trialDays', (int) config('schoolos.trial_days', 30)));
+    }
+
+    public function test_register_school_page_shows_the_live_base_domain_when_env_is_localhost(): void
+    {
+        $this->seed(RolesAndPlansSeeder::class);
+        config([
+            'app.url' => 'https://gambiaschoolos.com',
+            'schoolos.base_domain' => 'localhost',
+        ]);
+
+        $this->get(route('register-school.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Onboarding/RegisterSchool')
+                ->where('baseDomain', 'gambiaschoolos.com'));
     }
 
     public function test_authenticated_users_are_redirected_away_from_register_school(): void
