@@ -423,6 +423,119 @@ class CustomDomainTest extends TestCase
 
     /* ---------------------------- tenant routing --------------------------- */
 
+    public function test_platform_subdomain_serves_the_school_site(): void
+    {
+        $this->get('http://alpha.schoolos.test/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('School/PublicSite')
+                ->where('school.slug', 'alpha'));
+    }
+
+    public function test_stale_platform_domain_row_still_serves_the_current_subdomain(): void
+    {
+        Domain::query()->where('school_id', $this->school->id)->update([
+            'host' => 'alpha.gmschoolos.edu.gm',
+        ]);
+
+        $this->get('http://alpha.schoolos.test/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('School/PublicSite')
+                ->where('school.slug', 'alpha'));
+    }
+
+    public function test_live_host_subdomain_serves_the_school_even_when_base_domain_env_is_stale(): void
+    {
+        config([
+            'app.url' => 'https://gambiaschoolos.com',
+            'schoolos.central_domains' => ['gambiaschoolos.com', 'www.gambiaschoolos.com'],
+            'schoolos.base_domain' => 'gmschoolos.edu.gm',
+        ]);
+        Domain::query()->where('school_id', $this->school->id)->update([
+            'host' => 'alpha.gmschoolos.edu.gm',
+        ]);
+
+        $this->get('https://alpha.gambiaschoolos.com/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('School/PublicSite')
+                ->where('school.slug', 'alpha'));
+
+        $this->get('https://gambiaschoolos.com/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Marketing/Landing'));
+    }
+
+    public function test_school_slug_subdomain_resolves_when_all_platform_roots_are_stale(): void
+    {
+        config([
+            'app.url' => 'https://gmschoolos.edu.gm',
+            'schoolos.central_domains' => ['gmschoolos.edu.gm'],
+            'schoolos.base_domain' => 'gmschoolos.edu.gm',
+        ]);
+        Domain::query()->where('school_id', $this->school->id)->update([
+            'host' => 'alpha.gmschoolos.edu.gm',
+        ]);
+
+        $this->get('https://alpha.gambiaschoolos.com/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('School/PublicSite')
+                ->where('school.slug', 'alpha'));
+    }
+
+    public function test_unknown_platform_subdomain_does_not_bind_a_tenant(): void
+    {
+        $this->get('http://missing.schoolos.test/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Marketing/Landing'));
+    }
+
+    public function test_forwarded_apex_does_not_hide_the_school_subdomain_host(): void
+    {
+        config([
+            'app.url' => 'https://gambiaschoolos.com',
+            'schoolos.central_domains' => ['gambiaschoolos.com', 'www.gambiaschoolos.com'],
+            'schoolos.base_domain' => 'gambiaschoolos.com',
+        ]);
+
+        $this->get('https://alpha.gambiaschoolos.com/', [
+            'X-Forwarded-Host' => 'gambiaschoolos.com',
+        ])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('School/PublicSite')
+                ->where('school.slug', 'alpha'));
+
+        $this->get('https://gambiaschoolos.com/', [
+            'X-Forwarded-Host' => 'gambiaschoolos.com',
+        ])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Marketing/Landing'));
+    }
+
+    public function test_rewritten_apex_host_still_serves_school_from_forwarded_subdomain(): void
+    {
+        config([
+            'app.url' => 'https://gambiaschoolos.com',
+            'schoolos.central_domains' => ['gambiaschoolos.com', 'www.gambiaschoolos.com'],
+            'schoolos.base_domain' => 'gambiaschoolos.com',
+        ]);
+
+        $this->call('GET', 'https://gambiaschoolos.com/', [], [], [], [
+            'HTTP_HOST' => 'gambiaschoolos.com',
+            'HTTP_X_FORWARDED_HOST' => 'alpha.gambiaschoolos.com',
+            'HTTP_X_ORIGINAL_HOST' => 'alpha.gambiaschoolos.com',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTPS' => 'on',
+        ])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('School/PublicSite')
+                ->where('school.slug', 'alpha'));
+    }
+
     public function test_unverified_custom_domain_does_not_resolve_a_tenant(): void
     {
         $this->service()->connectCustomDomain($this->school, 'www.alpha.gm', true);
