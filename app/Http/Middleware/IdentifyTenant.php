@@ -24,7 +24,7 @@ class IdentifyTenant
     {
         $this->tenant->clear();
 
-        $host = strtolower($request->getHost());
+        $host = $this->domains->requestHost($request);
 
         if ($this->domains->isCentralHost($host)) {
             // Optional path-based school site for local/dev without wildcard DNS.
@@ -44,7 +44,7 @@ class IdentifyTenant
             $this->tenant->set($school);
 
             $domain = Domain::query()->where('host', $host)->first();
-            if ($domain && ($redirect = $this->redirectToPrimary($request, $domain))) {
+            if ($domain && ($redirect = $this->redirectToPrimary($request, $domain, $host))) {
                 return $redirect;
             }
         }
@@ -57,7 +57,7 @@ class IdentifyTenant
      * public pages on any other host of the school (e.g. the platform subdomain) forward to it.
      * Sign-in and /admin are intentionally left alone so admins are never locked out.
      */
-    protected function redirectToPrimary(Request $request, Domain $current): ?Response
+    protected function redirectToPrimary(Request $request, Domain $current, string $host): ?Response
     {
         if (! config('schoolos.redirect_to_primary_domain', true)
             || $current->is_primary
@@ -74,7 +74,7 @@ class IdentifyTenant
             ->first();
 
         if (! $primary || ! $primary->is_custom || ! $primary->verified_at || ! $primary->ssl_active
-            || strtolower($primary->host) === strtolower($request->getHost())) {
+            || strtolower($primary->host) === $host) {
             return null;
         }
 

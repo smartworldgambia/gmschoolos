@@ -14,6 +14,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Controllers\Platform\TlsAskController;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 
@@ -41,9 +42,17 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Honour X-Forwarded-Host from Laravel Cloud / the edge so {slug}.gambiaschoolos.com
-        // is not rewritten to the apex before IdentifyTenant runs.
-        $middleware->trustProxies(at: '*');
+        // Trust Cloud/edge for client IP, scheme and port. Do not trust X-Forwarded-Host:
+        // Laravel Cloud often sets that to the apex, which made getHost() look central and
+        // served the SaaS landing on {slug}.gambiaschoolos.com. Tenant ID uses Host plus
+        // forwarded candidates in SchoolDomainService::requestHost() instead.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_PREFIX
+        );
         // Official examination index numbers are stored exactly as supplied: never silently trimmed.
         $middleware->trimStrings(except: ['official_index_number']);
         $middleware->web(append: [

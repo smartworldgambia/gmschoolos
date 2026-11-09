@@ -5,6 +5,7 @@ namespace App\Services\School;
 use App\Models\Domain;
 use App\Models\School;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -542,7 +543,7 @@ class SchoolDomainService
             return $school?->isActive() ? $school : null;
         }
 
-        $slug = $this->platformSlugFromHost($host);
+        $slug = $this->platformSlugFromHost($host) ?? $this->fallbackSlugFromHost($host);
         if ($slug === null) {
             return null;
         }
@@ -550,6 +551,92 @@ class SchoolDomainService
         $school = School::query()->where('slug', $slug)->first();
 
         return $school?->isActive() ? $school : null;
+    }
+
+    /**
+     * Host that should identify the tenant for this request.
+     *
+     * `$request->getHost()` is not enough behind Laravel Cloud: trusted proxies
+     * prefer X-Forwarded-Host, which is often the apex (`gambiaschoolos.com`)
+     * even when the browser opened `{slug}.gambiaschoolos.com`. Using that apex
+     * short-circuits IdentifyTenant as "central" and renders the SaaS landing.
+     *
+     * Prefer any candidate that maps to a school; otherwise the first non-central
+     * host; otherwise getHost().
+     */
+    public function requestHost(Request $request): string
+    {
+        $candidates = $this->requestHostCandidates($request);
+
+        foreach ($candidates as $host) {
+            if ($this->schoolForHost($host) !== null) {
+                return $host;
+            }
+        }
+
+        foreach ($candidates as $host) {
+            if (! $this->isCentralHost($host)) {
+                return $host;
+            }
+        }
+
+        return $candidates[0] ?? $this->normalizeHost($request->getHost());
+    }
+
+    /**
+     * Every hostname this request might be for, Host first then forwarded values.
+     *
+     * @return list<string>
+     */
+    public function requestHostCandidates(Request $request): array
+    {
+        $out = [];
+
+        foreach ([
+            $request->headers->get('Host'),
+            $request->server->get('HTTP_HOST'),
+            $request->headers->get('X-Original-Host'),
+            $request->headers->get('X-Forwarded-Host'),
+            $request->headers->get('Forwarded'),
+            $request->getHost(),
+        ] as $raw) {
+            if (! is_string($raw) || $raw === '') {
+                continue;
+            }
+
+            foreach ($this->hostsFromHeaderValue($raw) as $host) {
+                if (! in_array($host, $out, true)) {
+                    $out[] = $host;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /** @return list<string> */
+    protected function hostsFromHeaderValue(string $raw): array
+    {
+        $out = [];
+
+        foreach (explode(',', $raw) as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+
+            if (stripos($part, 'host=') !== false && preg_match('/host="?([^";,]+)"?/i', $part, $match)) {
+                $host = $this->normalizeHost($match[1]);
+            } else {
+                $host = $this->normalizeHost($part);
+            }
+
+            if ($host !== '' && ! str_contains($host, '=') && ! in_array($host, $out, true)) {
+                $out[] = $host;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -582,6 +669,27 @@ class SchoolDomainService
         return null;
     }
 
+    /**
+     * {slug}.{sld}.{tld} when env still lists an old base domain (e.g. domain
+     * rows and SCHOOLOS_BASE_DOMAIN on gmschoolos.edu.gm while the browser is
+     * on brightfuture.gambiaschoolos.com). Reserved labels and deeper hosts
+     * (custom domains) are left to the domains table.
+     */
+    protected function fallbackSlugFromHost(string $host): ?string
+    {
+        $host = $this->normalizeHost($host);
+        if (! preg_match('/^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\.[^.]+\.[a-z]{2,}$/', $host, $match)) {
+            return null;
+        }
+
+        $slug = $match[1];
+        if (in_array($slug, (array) config('schoolos.reserved_subdomains', []), true)) {
+            return null;
+        }
+
+        return $slug;
+    }
+
     /** @return list<string> */
     protected function platformRoots(): array
     {
@@ -604,11 +712,16 @@ class SchoolDomainService
     public function isCentralHost(string $host): bool
     {
         $host = $this->normalizeHost($host);
+        if ($host === '') {
+            return false;
+        }
 
-        return in_array($host, array_map(
-            static fn ($value) => strtolower(trim((string) $value)),
-            (array) config('schoolos.central_domains', [])
-        ), true);
+        $roots = $this->platformRoots();
+        if (in_array($host, $roots, true)) {
+            return true;
+        }
+
+        return str_starts_with($host, 'www.') && in_array(substr($host, 4), $roots, true);
     }
 
     /* ------------------------------------------------------------------ */
