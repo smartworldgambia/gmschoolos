@@ -47,7 +47,7 @@ class RegisterSchoolController extends Controller
             'preselectedCategory' => $preselected,
             'submitUrl' => route('register-school.store'),
             'subdomainCheckUrl' => route('register-school.subdomain-check'),
-            'baseDomain' => config('schoolos.base_domain', 'localhost'),
+            'baseDomain' => app(SchoolDomainService::class)->baseDomain(),
             'trialDays' => (int) config('schoolos.trial_days', 30),
             'legal' => ['terms' => route('terms'), 'privacy' => route('privacy')],
             'categories' => self::CATEGORIES,
@@ -189,7 +189,7 @@ class RegisterSchoolController extends Controller
             return false;
         }
 
-        $baseDomain = strtolower((string) config('schoolos.base_domain', 'localhost'));
+        $baseDomain = app(SchoolDomainService::class)->baseDomain();
         if (in_array($baseDomain, ['localhost', '127.0.0.1'], true)) {
             return false;
         }

@@ -13,7 +13,7 @@ return [
         explode(',', env('SCHOOLOS_CENTRAL_DOMAINS', 'localhost,127.0.0.1'))
     ))),
 
-    'base_domain' => env('SCHOOLOS_BASE_DOMAIN', 'localhost'),
+    'base_domain' => env('SCHOOLOS_BASE_DOMAIN', 'gambiaschoolos.com'),
 
     /*
     | CNAME target shown to schools connecting a custom domain.
