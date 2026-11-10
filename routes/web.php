@@ -93,13 +93,14 @@ Route::middleware(['identify.tenant'])->group(function () {
         Route::post('/register-school', [RegisterSchoolController::class, 'store'])
             ->middleware('throttle:10,1')
             ->name('register-school.store');
-
-        // Phase 4 - staff invitation acceptance (the single-use token is the only credential)
-        Route::get('/invitations/{token}', [StaffInvitationController::class, 'show'])
-            ->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:30,1')->name('invitations.show');
-        Route::post('/invitations/{token}', [StaffInvitationController::class, 'accept'])
-            ->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:10,1')->name('invitations.accept');
     });
+
+    // Invitation links are opened from email, often in a browser already signed in as the school admin.
+    // They must not sit behind `guest`, or the admin is bounced to User accounts and the invite stays pending.
+    Route::get('/invitations/{token}', [StaffInvitationController::class, 'show'])
+        ->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:30,1')->name('invitations.show');
+    Route::post('/invitations/{token}', [StaffInvitationController::class, 'accept'])
+        ->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:10,1')->name('invitations.accept');
 });
 
 Route::middleware(['auth', 'verified', 'platform.admin'])->prefix('platform')->name('platform.')->group(function () {

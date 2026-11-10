@@ -277,7 +277,9 @@ class IntegrationsConsoleTest extends TestCase
         $this->assertSame('smtp', config('mail.default'));
 
         // an edit that changes nothing keeps it live
-        $this->as($a)->put(route('platform.integrations.save', 'mail'), $this->mailBody(['password' => '']))->assertSessionHas('success', 'ok.integ.saved');
+        $this->as($a)->put(route('platform.integrations.save', 'mail'), $this->mailBody(['password' => '']))
+            ->assertSessionHas('success', 'ok.integ.saved')
+            ->assertSessionHas('integration', 'mail');
         $this->assertTrue($this->svc()->isActive('mail'));
 
         // a real change (the host) takes it offline and puts the server default back

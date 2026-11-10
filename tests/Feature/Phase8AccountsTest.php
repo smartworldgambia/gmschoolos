@@ -290,6 +290,37 @@ class Phase8AccountsTest extends Phase8TestCase
         $this->actAs($this->admin)->post(route('accounts.reset', $this->teacher->id))->assertSessionHas('error', 'err.acct.blocked');
     }
 
+    public function test_a_signed_in_administrator_can_open_and_accept_an_invitation_link(): void
+    {
+        Notification::fake();
+        $this->actAs($this->admin)->post(route('accounts.invite.staff'), [
+            'name' => 'Adama Marong', 'email' => 'adama-invite@alpha.test', 'role' => 'teacher',
+        ])->assertSessionHasNoErrors();
+
+        $token = $this->lastInviteToken();
+
+        $this->actAs($this->admin)->get(route('invitations.show', $token))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/AcceptInvitation')
+                ->where('invalid', false)
+                ->where('signedIn.name', $this->admin->name)
+                ->where('invitation.email', 'adama-invite@alpha.test'));
+
+        $this->actAs($this->admin)->post(route('invitations.accept', $token), [
+            'password' => self::PASSWORD, 'password_confirmation' => self::PASSWORD,
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->hasRole('teacher'));
+        $this->assertNotSame($this->admin->id, auth()->id());
+        $this->assertSame('accepted', $this->platform(fn () => StaffInvitation::query()->firstOrFail()->state()));
+
+        $this->actAs($this->admin)->get(route('accounts.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('invitations.0.state', 'accepted'));
+    }
+
     public function test_pending_invitations_can_be_resent_and_revoked(): void
     {
         Notification::fake();
