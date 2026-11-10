@@ -70,7 +70,7 @@ class IntegrationController extends Controller
 
         $result = $this->integrations->save($integration, $data, $request->user());
 
-        return back()->with('success', $result['deactivated'] ? 'ok.integ.savedOff' : 'ok.integ.saved');
+        return $this->flashed($integration, $result['deactivated'] ? 'ok.integ.savedOff' : 'ok.integ.saved');
     }
 
     public function test(Request $request, string $integration): RedirectResponse
@@ -87,51 +87,56 @@ class IntegrationController extends Controller
         try {
             $result = $this->integrations->test($integration, (string) $request->input('target'), $request->user());
         } catch (AcademicRuleException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->flashed($integration, $e->getMessage(), error: true);
         }
 
         return $result['ok']
-            ? back()->with('success', $key === 'email' ? 'ok.integ.testSentMail' : 'ok.integ.testSentSms')
-            : back()->with('error', 'err.integ.testFailed');
+            ? $this->flashed($integration, $key === 'email' ? 'ok.integ.testSentMail' : 'ok.integ.testSentSms')
+            : $this->flashed($integration, 'err.integ.testFailed', error: true);
     }
 
     public function activate(Request $request, string $integration): RedirectResponse
     {
         $this->password($request);
 
-        return $this->guarded(fn () => $this->integrations->activate($integration, $request->user()), 'ok.integ.activated');
+        return $this->guarded($integration, fn () => $this->integrations->activate($integration, $request->user()), 'ok.integ.activated');
     }
 
     public function deactivate(Request $request, string $integration): RedirectResponse
     {
         $this->password($request);
 
-        return $this->guarded(fn () => $this->integrations->deactivate($integration, $request->user()), 'ok.integ.deactivated');
+        return $this->guarded($integration, fn () => $this->integrations->deactivate($integration, $request->user()), 'ok.integ.deactivated');
     }
 
     public function confirm(Request $request, string $integration): RedirectResponse
     {
-        return $this->guarded(fn () => $this->integrations->confirm($integration, $request->user()), 'ok.integ.confirmed');
+        return $this->guarded($integration, fn () => $this->integrations->confirm($integration, $request->user()), 'ok.integ.confirmed');
     }
 
     public function destroy(Request $request, string $integration): RedirectResponse
     {
         $this->password($request);
 
-        return $this->guarded(fn () => $this->integrations->clear($integration, $request->user()), 'ok.integ.cleared');
+        return $this->guarded($integration, fn () => $this->integrations->clear($integration, $request->user()), 'ok.integ.cleared');
     }
 
     // ------------------------------------------------------------------
 
-    private function guarded(callable $fn, string $ok): RedirectResponse
+    private function guarded(string $integration, callable $fn, string $ok): RedirectResponse
     {
         try {
             $fn();
         } catch (AcademicRuleException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->flashed($integration, $e->getMessage(), error: true);
         }
 
-        return back()->with('success', $ok);
+        return $this->flashed($integration, $ok);
+    }
+
+    private function flashed(string $integration, string $message, bool $error = false): RedirectResponse
+    {
+        return back()->with($error ? 'error' : 'success', $message)->with('integration', $integration);
     }
 
     /** Every change that can redirect mail or SMS needs the administrator's own password again. */

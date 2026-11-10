@@ -81,6 +81,33 @@ function ServerDefault({ item, integration }) {
     );
 }
 
+function CardFlash({ integration }) {
+    const { t } = useLocale();
+    const flash = usePage().props.flash ?? {};
+    if (flash.integration && flash.integration !== integration) {
+        return null;
+    }
+    const success = messageText(t, flash.success);
+    const error = messageText(t, flash.error);
+    if (!success && !error) {
+        return null;
+    }
+
+    return (
+        <div
+            className={
+                error
+                    ? 'rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800'
+                    : 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900'
+            }
+            role={error ? 'alert' : 'status'}
+            aria-live="polite"
+        >
+            {error || success}
+        </div>
+    );
+}
+
 function Actions({ integration, item, form, errors, testLabel, targetLabel, defaultTarget }) {
     const { t, locale } = useLocale();
     const [target, setTarget] = useState(defaultTarget ?? '');
@@ -93,6 +120,7 @@ function Actions({ integration, item, form, errors, testLabel, targetLabel, defa
 
     return (
         <div className="mt-6 space-y-5">
+            <CardFlash integration={integration} />
             <div className="grid gap-3 sm:grid-cols-2">
                 <Field label={t('integ.password')} hint={t('integ.password.hint')} error={messageText(t, errors.current_password)}>
                     <Input type="password" autoComplete="current-password" value={form.data.current_password} onChange={(e) => form.setData('current_password', e.target.value)} />

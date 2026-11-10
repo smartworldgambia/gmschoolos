@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'failedCount' => fn () => $request->session()->get('failedCount'),
                 'school_url' => fn () => $request->session()->get('school_url'),
                 'school_host' => fn () => $request->session()->get('school_host'),
+                'integration' => fn () => $request->session()->get('integration'),
             ],
             'schoolos' => [
                 'currency' => config('schoolos.currency'),

@@ -5,7 +5,7 @@ import { useLocale } from '@/i18n/LocaleProvider';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function AcceptInvitation({ invalid = false, token = '', invitation = null }) {
+export default function AcceptInvitation({ invalid = false, token = '', invitation = null, signedIn = null }) {
     const { t } = useLocale();
     const form = useForm({ password: '', password_confirmation: '' });
 
@@ -27,6 +27,11 @@ export default function AcceptInvitation({ invalid = false, token = '', invitati
             <Head title={t('invite.title')} />
             <h1 className="text-xl font-bold text-navy">{t('invite.title')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">{t('invite.intro', { school: invitation.school })}</p>
+            {signedIn?.name ? (
+                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                    {t('invite.signedIn', { name: signedIn.name })}
+                </p>
+            ) : null}
 
             <dl className="mt-4 space-y-2 rounded-xl bg-surface p-4 text-sm">
                 <div className="flex justify-between gap-3">
