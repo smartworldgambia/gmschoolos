@@ -33,7 +33,7 @@ function Tabs({ tab, setTab }) {
     );
 }
 
-function StaffInvite({ roles, allocations }) {
+function StaffInvite({ roles, allocations, onInvited }) {
     const { t } = useLocale();
     const form = useForm({ name: '', email: '', role: roles[0] ?? 'teacher', class_subject_ids: [] });
     const teaching = TEACHING.includes(form.data.role);
@@ -47,7 +47,13 @@ function StaffInvite({ roles, allocations }) {
                 className="space-y-3"
                 onSubmit={(e) => {
                     e.preventDefault();
-                    form.post(route('accounts.invite.staff'), { preserveScroll: true, onSuccess: () => form.reset() });
+                    form.post(route('accounts.invite.staff'), {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            form.reset();
+                            onInvited?.();
+                        },
+                    });
                 }}
             >
                 <ErrorSummary errors={form.errors} />
@@ -324,7 +330,7 @@ export default function Index({ users, invitations = [], filters = {}, roles = [
 
             {tab === 'invite' ? (
                 <div className="grid gap-6 lg:grid-cols-3">
-                    <StaffInvite roles={roles} allocations={allocations} />
+                    <StaffInvite roles={roles} allocations={allocations} onInvited={() => setTab('invitations')} />
                     <FamilyInvite kind="student" candidates={candidates} filters={filters} parentAccess={parentAccess} />
                     <FamilyInvite kind="guardian" candidates={candidates} filters={filters} parentAccess={parentAccess} />
                 </div>

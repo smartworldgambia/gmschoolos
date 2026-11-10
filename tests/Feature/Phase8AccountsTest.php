@@ -12,7 +12,9 @@ use App\Models\User;
 use App\Notifications\StaffInvitationNotification;
 use App\Support\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 
 /** Part 16: invite, assign roles / school / classes, verify, activate, reset, suspend, revoke. */
 class Phase8AccountsTest extends Phase8TestCase
@@ -118,6 +120,28 @@ class Phase8AccountsTest extends Phase8TestCase
 
         $this->actAs($this->admin)->post(route('accounts.invite.guardian'), ['guardian_id' => $guardian->id])->assertSessionHasErrors('guardian');
         Notification::assertNothingSent();
+    }
+
+    public function test_staff_invitation_email_is_sent_immediately_and_uses_the_accept_route(): void
+    {
+        config(['queue.default' => 'database']);
+        Queue::fake();
+        Notification::fake();
+
+        $this->actAs($this->admin)->post(route('accounts.invite.staff'), [
+            'name' => 'Musa Ceesay', 'email' => 'musa-mail@alpha.test', 'role' => 'headteacher',
+        ])->assertSessionHasNoErrors()->assertSessionHas('success', 'ok.acct.invited');
+
+        $this->assertFalse(is_a(StaffInvitationNotification::class, ShouldQueue::class, true));
+        Queue::assertNothingPushed();
+
+        $token = $this->lastInviteToken();
+        $this->assertSame(64, strlen($token));
+        Notification::assertSentOnDemand(StaffInvitationNotification::class, function (StaffInvitationNotification $n) use ($token) {
+            return $n->acceptUrl === route('invitations.show', ['token' => $token], absolute: true);
+        });
+
+        $this->assertSame(1, $this->platform(fn () => StaffInvitation::query()->where('email', 'musa-mail@alpha.test')->count()));
     }
 
     public function test_a_teacher_invitation_hands_over_the_chosen_allocation_and_creates_a_staff_record(): void

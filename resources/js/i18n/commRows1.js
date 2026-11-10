@@ -39,6 +39,7 @@ export const commRows1 = [
     ['err.acct.invitePending', 'An invitation for this person is already pending.', 'Une invitation est déjà en attente pour cette personne.', 'توجد دعوة معلّقة لهذا الشخص بالفعل.'],
     ['err.acct.inviteAccepted', 'This invitation was already accepted.', 'Cette invitation a déjà été acceptée.', 'تم قبول هذه الدعوة بالفعل.'],
     ['err.acct.inviteInvalid', 'This invitation can no longer be used.', 'Cette invitation n’est plus utilisable.', 'لم يعد بالإمكان استخدام هذه الدعوة.'],
+    ['err.acct.inviteMailFailed', 'The invitation was saved, but the email could not be sent. Open Invitations and resend once mail is configured.', 'L’invitation a été enregistrée, mais l’e-mail n’a pas pu être envoyé. Ouvrez Invitations et renvoyez-la une fois le courrier configuré.', 'تم حفظ الدعوة لكن تعذر إرسال البريد. افتح الدعوات وأعد الإرسال بعد إعداد البريد.'],
     ['err.acct.suspended', 'This account is suspended. Contact your school.', 'Ce compte est suspendu. Contactez votre école.', 'هذا الحساب معلّق. تواصل مع مدرستك.'],
 
     // ---- flash: messaging, announcements, SMS, notifications

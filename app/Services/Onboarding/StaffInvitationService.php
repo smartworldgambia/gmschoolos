@@ -10,7 +10,6 @@ use App\Models\StaffInvitation;
 use App\Models\Student;
 use App\Models\User;
 use App\Notifications\StaffInvitationNotification;
-use App\Services\School\SchoolDomainService;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -42,7 +41,6 @@ class StaffInvitationService
 
     public function __construct(
         private readonly TenantContext $tenant,
-        private readonly SchoolDomainService $domains,
     ) {}
 
     /** @return array<int, string> */
@@ -293,15 +291,21 @@ class StaffInvitationService
 
     private function send(School $school, StaffInvitation $invitation, string $token): void
     {
-        $urls = $this->domains->urlsFor($school);
-        $acceptUrl = rtrim($urls['primary_url'], '/').'/invitations/'.$token;
+        // Named route on the app URL — never /sites/{slug}/invitations/{token}, which is not a real route.
+        $acceptUrl = route('invitations.show', ['token' => $token], absolute: true);
 
-        Notification::route('mail', $invitation->email)->notify(new StaffInvitationNotification(
-            school: $school,
-            inviteeName: $invitation->name,
-            roleLabel: Str::of($invitation->role)->replace('_', ' ')->title()->toString(),
-            acceptUrl: $acceptUrl,
-            expiresOn: $invitation->expires_at->toFormattedDateString(),
-        ));
+        try {
+            Notification::route('mail', $invitation->email)->notifyNow(new StaffInvitationNotification(
+                school: $school,
+                inviteeName: $invitation->name,
+                roleLabel: Str::of($invitation->role)->replace('_', ' ')->title()->toString(),
+                acceptUrl: $acceptUrl,
+                expiresOn: $invitation->expires_at->toFormattedDateString(),
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+
+            throw ValidationException::withMessages(['email' => 'err.acct.inviteMailFailed']);
+        }
     }
 }
