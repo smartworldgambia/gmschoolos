@@ -196,6 +196,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Platform outgoing mail identity
+    |--------------------------------------------------------------------------
+    | Used as MAIL_FROM_* when those env values are still Laravel placeholders,
+    | and as the empty-form defaults on Platform → Integrations. SMTP host and
+    | password are never invented here — set MAIL_* on Laravel Cloud or save
+    | them in the console.
+    */
+    'mail' => [
+        'from_address' => env('SCHOOLOS_MAIL_FROM_ADDRESS', 'noreply@gambiaschoolos.com'),
+        'from_name' => env('SCHOOLOS_MAIL_FROM_NAME', env('APP_NAME', 'Gambia SchoolOS')),
+        'smtp' => [
+            'port' => (int) env('SCHOOLOS_MAIL_SMTP_PORT', 587),
+            'encryption' => env('SCHOOLOS_MAIL_SMTP_ENCRYPTION', 'tls'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Marketing / SaaS landing
     |--------------------------------------------------------------------------
     | Public landing content. The stats strip uses live database counts.

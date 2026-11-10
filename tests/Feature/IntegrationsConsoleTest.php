@@ -506,8 +506,32 @@ class IntegrationsConsoleTest extends TestCase
         config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => 'mail.server-default.test', 'mail.mailers.smtp.password' => 'env-secret-never-shown', 'mail.from.address' => 'env@schoolos.test']);
 
         $response = $this->as($this->admin())->get(route('platform.integrations.index'))->assertOk();
-        $response->assertInertia(fn ($p) => $p->where('items.mail.server.driver', 'smtp')->where('items.mail.server.real', true)->where('items.mail.server.host', 'mail.server-default.test'));
+        $response->assertInertia(fn ($p) => $p->where('items.mail.server.driver', 'smtp')->where('items.mail.server.real', true)->where('items.mail.server.host', 'mail.server-default.test')->where('items.mail.server.from', 'env@schoolos.test'));
         $this->assertStringNotContainsString('env-secret-never-shown', $response->getContent());
+    }
+
+    public function test_the_mail_form_is_prefilled_from_platform_identity(): void
+    {
+        config([
+            'schoolos.mail.from_address' => 'noreply@gambiaschoolos.com',
+            'schoolos.mail.from_name' => 'Gambia SchoolOS',
+            'schoolos.mail.smtp.port' => 587,
+            'schoolos.mail.smtp.encryption' => 'tls',
+            'mail.mailers.smtp.host' => '127.0.0.1',
+            'mail.mailers.smtp.port' => 2525,
+            'mail.from.address' => 'hello@example.com',
+            'mail.from.name' => 'Laravel',
+        ]);
+
+        $this->as($this->admin())->get(route('platform.integrations.index'))->assertOk()
+            ->assertInertia(fn ($p) => $p
+                ->where('items.mail.state', 'none')
+                ->where('items.mail.values.from_address', 'noreply@gambiaschoolos.com')
+                ->where('items.mail.values.from_name', 'Gambia SchoolOS')
+                ->where('items.mail.values.port', 587)
+                ->where('items.mail.values.encryption', 'tls')
+                ->where('items.mail.values.host', '')
+                ->missing('items.mail.values.password'));
     }
 
     public function test_schools_cannot_see_platform_credentials_through_their_own_pages(): void

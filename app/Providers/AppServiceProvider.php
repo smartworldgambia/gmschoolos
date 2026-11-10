@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\Integrations\IntegrationSettings;
 use App\Services\Scale\QueryProfiler;
+use App\Support\PlatformMail;
 use App\Support\TenantContext;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Event;
@@ -43,10 +44,15 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(NotificationFailed::class, [\App\Listeners\RecordNotificationDelivery::class, 'onFailed']);
         Event::listen(JobFailed::class, [\App\Listeners\RecordNotificationDelivery::class, 'onJobFailed']);
 
-        // Platform-console mail / SMS credentials: only ACTIVE (tested) values are overlaid on the server defaults, once per
-        // request and again before every queued job so a long-running worker never keeps an old transport.
-        $this->app->booted(fn () => $this->app->make(IntegrationSettings::class)->apply());
-        Event::listen(JobProcessing::class, fn () => $this->app->make(IntegrationSettings::class)->apply());
+        // Platform identity (from-address) and env SMTP promotion first; console overlay still wins when active.
+        $this->app->booted(function () {
+            PlatformMail::bootstrap();
+            $this->app->make(IntegrationSettings::class)->apply();
+        });
+        Event::listen(JobProcessing::class, function () {
+            PlatformMail::bootstrap();
+            $this->app->make(IntegrationSettings::class)->apply();
+        });
 
         $profiler = $this->app->make(QueryProfiler::class);
 
