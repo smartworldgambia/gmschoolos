@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\IntegrationChangedNotification;
 use App\Services\Sms\PhoneNumber;
 use App\Services\Sms\SmsService;
+use App\Support\PlatformMail;
 use App\Support\TenantContext;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Cache;
@@ -174,12 +175,15 @@ class IntegrationSettings
 
         $values = [];
         $secretsSet = [];
+        $mailDefaults = $integration === 'mail' ? PlatformMail::formDefaults() : [];
         foreach (self::FIELDS[$integration] as $name => [$type, , $secret]) {
             if ($secret) {
                 $raw = $plain[$name] ?? null;
                 $secretsSet[$name] = filled($raw) ? ['set' => true, 'hint' => mb_strlen((string) $raw) >= 16 ? mb_substr((string) $raw, -4) : null] : ['set' => false, 'hint' => null];
             } else {
-                $values[$name] = $type === 'bool' ? (bool) ($plain[$name] ?? false) : ($plain[$name] ?? ($name === 'encryption' ? 'tls' : ($name === 'port' ? 587 : ($name === 'driver' ? 'twilio' : ''))));
+                $fallback = $mailDefaults[$name] ?? ($name === 'encryption' ? 'tls' : ($name === 'port' ? 587 : ($name === 'driver' ? 'twilio' : '')));
+                $storedValue = is_array($plain) ? ($plain[$name] ?? null) : null;
+                $values[$name] = $type === 'bool' ? (bool) ($storedValue ?? false) : ($storedValue ?? $fallback);
             }
         }
 
@@ -217,8 +221,9 @@ class IntegrationSettings
         if ($integration === 'mail') {
             $mailer = (string) ($base['mail.default'] ?? 'log');
             $smtp = (array) ($base['mail.mailers.smtp'] ?? []);
+            $real = PlatformMail::mailerDelivers($mailer, $smtp);
 
-            return ['driver' => $mailer, 'real' => $mailer === 'smtp', 'host' => $mailer === 'smtp' ? ($smtp['host'] ?? null) : null, 'from' => $base['mail.from']['address'] ?? null];
+            return ['driver' => $mailer, 'real' => $real, 'host' => $real ? ($smtp['host'] ?? null) : null, 'from' => $base['mail.from']['address'] ?? null];
         }
 
         $driver = (string) ($base['schoolos.sms.driver'] ?? 'log');

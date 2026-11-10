@@ -60,7 +60,7 @@ function StatusLine({ item }) {
     );
 }
 
-function ServerDefault({ item }) {
+function ServerDefault({ item, integration }) {
     const { t } = useLocale();
     const s = item.server;
 
@@ -71,6 +71,12 @@ function ServerDefault({ item }) {
                 {s.host ? <span dir="ltr"> {'\u00b7'} {s.host}</span> : null}
             </p>
             <p className="mt-1">{s.real ? t('integ.server.real') : t('integ.server.logOnly')}</p>
+            {integration === 'mail' && !s.real ? <p className="mt-1">{t('integ.server.cloudHint')}</p> : null}
+            {integration === 'mail' && s.from ? (
+                <p className="mt-1" dir="ltr">
+                    {t('integ.f.from_address')}: {s.from}
+                </p>
+            ) : null}
         </div>
     );
 }
@@ -183,7 +189,8 @@ function MailCard({ item, testDefaults }) {
     return (
         <Card title={t('integ.name.mail')}>
             <StatusLine item={item} />
-            <ServerDefault item={item} />
+            <ServerDefault item={item} integration="mail" />
+            {item.state === 'none' ? <p className="mb-4 text-sm text-slate-600">{t('integ.mail.prefill')}</p> : null}
             {item.state === 'unreadable' ? <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{t('integ.unreadable.note')}</p> : null}
 
             <form
@@ -234,7 +241,7 @@ function SmsCard({ item, testDefaults, webhooks }) {
     return (
         <Card title={t('integ.name.sms')}>
             <StatusLine item={item} />
-            <ServerDefault item={item} />
+            <ServerDefault item={item} integration="sms" />
             {item.state === 'unreadable' ? <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{t('integ.unreadable.note')}</p> : null}
 
             <form
