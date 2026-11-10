@@ -8,6 +8,7 @@ use App\Models\School;
 use App\Models\Staff;
 use App\Models\StaffInvitation;
 use App\Models\Student;
+use App\Models\Subject;
 use App\Models\User;
 use App\Notifications\StaffInvitationNotification;
 use App\Support\TenantContext;
@@ -234,6 +235,14 @@ class StaffInvitationService
                         ClassSubject::query()->withoutGlobalScopes()
                             ->where('school_id', $fresh->school_id)->whereIn('id', $fresh->class_subject_ids)->whereNull('teacher_id')
                             ->update(['teacher_id' => $user->id]);
+
+                        $subjectIds = ClassSubject::query()->withoutGlobalScopes()
+                            ->where('school_id', $fresh->school_id)->whereIn('id', $fresh->class_subject_ids)
+                            ->pluck('subject_id')->unique()->filter();
+                        $lms = app(\App\Services\Lms\CourseService::class);
+                        foreach (Subject::query()->withoutGlobalScopes()->whereIn('id', $subjectIds)->get() as $subject) {
+                            $lms->syncSubjectCourse($subject);
+                        }
                     }
                 }
 

@@ -26,7 +26,7 @@ export const lmsRows4 = [
     ['lms.dash.subtitleClass', 'Courses for {class}', 'Cours de {class}', 'مقررات {class}'],
     ['lms.dash.emptyGuardian', 'This space is for learners and teachers.', 'Cet espace est réservé aux élèves et aux enseignants.', 'هذه المساحة للطلاب والمعلمين.'],
     ['lms.dash.emptyGuardianHelp', 'Open your family portal to follow your child’s school work.', 'Ouvrez l’espace famille pour suivre le travail scolaire de votre enfant.', 'افتح بوابة الأسرة لمتابعة عمل طفلك المدرسي.'],
-    ['lms.dash.emptyStaffHelp', 'Create a course to organise lessons, assignments and quizzes for your classes.', 'Créez un cours pour organiser leçons, devoirs et quiz de vos classes.', 'أنشئ مقررًا لتنظيم الدروس والواجبات والاختبارات لصفوفك.'],
+    ['lms.dash.emptyStaffHelp', 'Subjects assigned to you in Academics appear here as courses. Ask an administrator to allocate a subject if this list is empty.', 'Les matières qui vous sont affectées dans la structure académique apparaissent ici comme cours. Demandez à un administrateur de vous en affecter une si la liste est vide.', 'المواد المسندة إليك في الهيكل الأكاديمي تظهر هنا كمقررات. اطلب من المسؤول إسناد مادة إن كانت القائمة فارغة.'],
     ['lms.dash.emptyLearnerHelp', 'When your teacher publishes a course for your class, it will appear here.', 'Lorsque votre enseignant publie un cours pour votre classe, il apparaîtra ici.', 'عندما ينشر معلّمك مقررًا لصفك سيظهر هنا.'],
     ['lms.dash.statsCourses', 'Courses', 'Cours', 'المقررات'],
     ['lms.dash.search', 'Search courses', 'Rechercher un cours', 'بحث في المقررات'],

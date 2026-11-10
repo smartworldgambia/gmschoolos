@@ -42,6 +42,10 @@ class CourseController extends Controller
         $manager = $user->can('lms.manage');
         $teaching = $user->can('lms.teach');
 
+        if ($teaching) {
+            $this->service->syncAllocatedCourses($manager ? null : $user);
+        }
+
         $query = Course::query()
             ->with(['teacher:id,name', 'subject:id,name', 'category:id,name', 'audiences.schoolClass:id,name'])
             ->withCount(['lessons', 'assignments', 'quizzes'])

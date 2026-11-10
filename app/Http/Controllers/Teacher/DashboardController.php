@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\TimetableSlot;
 use App\Services\Academics\TeacherScope;
 use App\Services\Communications\AnnouncementService;
+use App\Services\Lms\CourseService;
 use App\Services\Messaging\MessagingService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,10 +28,11 @@ class DashboardController extends Controller
 {
     use SharesSchoolShell;
 
-    public function __invoke(TeacherScope $scope, AnnouncementService $announcements, MessagingService $messages): Response
+    public function __invoke(TeacherScope $scope, AnnouncementService $announcements, MessagingService $messages, CourseService $courses): Response
     {
         $user = auth()->user();
         $classIds = $scope->classIds($user);
+        $courses->syncAllocatedCourses($user);
 
         $classes = SchoolClass::query()->whereIn('id', $classIds)->withCount('students')->orderBy('name')->get();
         $studentCount = Student::query()->whereIn('school_class_id', $classIds)->where('status', 'active')->count();

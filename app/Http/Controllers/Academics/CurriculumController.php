@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\TimetableSlot;
 use App\Models\User;
+use App\Services\Lms\CourseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -95,6 +96,14 @@ class CurriculumController extends Controller
                     'event' => 'curriculum_saved', 'description' => "Class {$record->id}: {$rows->count()} subject(s)",
                 ]);
             });
+
+            $lms = app(CourseService::class);
+            foreach ($keep->merge($removed)->unique()->filter() as $subjectId) {
+                $subject = Subject::query()->find($subjectId);
+                if ($subject) {
+                    $lms->syncSubjectCourse($subject);
+                }
+            }
         });
     }
 
@@ -119,6 +128,13 @@ class CurriculumController extends Controller
                     }
                 }
             });
+            $lms = app(CourseService::class);
+            foreach ($subjects->pluck('subject_id')->unique() as $subjectId) {
+                $subject = Subject::query()->find($subjectId);
+                if ($subject) {
+                    $lms->syncSubjectCourse($subject);
+                }
+            }
         });
     }
 

@@ -216,7 +216,7 @@ export const academicRows3 = [
     ['err.class.teacherInvalid', 'Choose a teacher from this school.', 'Choisissez un enseignant de cet établissement.', 'اختر معلماً من هذه المدرسة.'],
     ['err.curriculum.duplicate', 'This subject is already assigned to the class.', 'Cette matière est déjà affectée à la classe.', 'هذه المادة مسندة للصف بالفعل.'],
     ['err.curriculum.inUse', 'This subject has timetable lessons or results in this class and cannot be removed.', 'Cette matière a des cours ou des résultats dans cette classe et ne peut pas être retirée.', 'لهذه المادة دروس في الجدول أو نتائج في هذا الصف ولا يمكن إزالتها.'],
-    ['err.department.headInvalid', 'Choose a head of department from this school’s staff.', 'Choisissez un chef de département parmi le personnel de l’école.', 'اختر رئيس القسم من موظفي المدرسة.'],
+    ['err.department.headInvalid', 'Choose a head of program from this school’s staff.', 'Choisissez un responsable de programme parmi le personnel de l’école.', 'اختر رئيس البرنامج من موظفي المدرسة.'],
     ['err.event.order', 'The end date cannot be before the start date.', 'La date de fin ne peut pas précéder la date de début.', 'لا يمكن أن يسبق تاريخ النهاية تاريخ البداية.'],
     ['err.event.type', 'Choose a valid event type.', 'Choisissez un type d’événement valide.', 'اختر نوع فعالية صالحاً.'],
     ['err.exam.badState', 'This action is not available in the current state.', 'Cette action n’est pas disponible dans l’état actuel.', 'هذا الإجراء غير متاح في الحالة الحالية.'],

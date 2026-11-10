@@ -12,6 +12,7 @@ use App\Models\Level;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\Lms\CourseService;
 use App\Services\Onboarding\SetupWizard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -156,6 +157,7 @@ class AcademicController extends Controller
         if (! empty($v['department_id'])) {
             $subject->update(['department_id' => $v['department_id']]);
         }
+        app(CourseService::class)->syncSubjectCourse($subject->fresh());
 
         return back()->with('success', 'ok.saved');
     }
@@ -177,6 +179,7 @@ class AcademicController extends Controller
                 throw AcademicRuleException::because('err.name.taken');
             }
             $record->update(['name' => trim($v['name']), 'code' => $code, 'department_id' => $v['department_id'] ?? null]);
+            app(CourseService::class)->syncSubjectCourse($record->fresh());
         });
     }
 

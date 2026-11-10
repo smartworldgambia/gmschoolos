@@ -76,6 +76,10 @@ class CourseService
                 'category_id' => $this->resolveCategory($data),
             ];
 
+            if (! $course && $subjectId) {
+                $course = Course::query()->where('subject_id', $subjectId)->orderBy('id')->first();
+            }
+
             if (! $course) {
                 $attrs['created_by'] = $actor->id;
                 $attrs['teacher_id'] = $manager ? $this->validTeacher($data['teacher_id'] ?? null) : $actor->id;
@@ -97,6 +101,75 @@ class CourseService
 
             return $course->fresh();
         });
+    }
+
+    /**
+     * One LMS course per academic subject: the same offering teachers are allocated to in Academics.
+     * Basic schools call that a subject; tertiary schools call it a course.
+     */
+    public function syncSubjectCourse(Subject $subject): Course
+    {
+        $allocations = ClassSubject::query()->withoutGlobalScopes()
+            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)->get();
+        $teacherIds = $allocations->pluck('teacher_id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
+        $classIds = $allocations->pluck('school_class_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+        $course = Course::query()->withoutGlobalScopes()
+            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)->orderBy('id')->first();
+
+        $primary = $course && $course->teacher_id && $teacherIds->contains((int) $course->teacher_id)
+            ? (int) $course->teacher_id
+            : ($teacherIds->first() ?: null);
+
+        $attrs = [
+            'title' => $subject->name,
+            'code' => $subject->code,
+            'subject_id' => $subject->id,
+            'teacher_id' => $primary,
+        ];
+
+        if (! $course) {
+            $course = Course::query()->create($attrs + [
+                'school_id' => $subject->school_id,
+                'created_by' => auth()->id(),
+                'status' => $teacherIds->isNotEmpty() ? 'published' : 'draft',
+            ]);
+        } else {
+            if ($course->status !== 'archived' && $teacherIds->isNotEmpty()) {
+                $attrs['status'] = 'published';
+            }
+            $course->forceFill($attrs)->save();
+        }
+
+        $keep = $teacherIds->reject(fn ($id) => $id === (int) $course->teacher_id)->values()->all();
+        CourseTeacher::query()->where('course_id', $course->id)->whereNotIn('user_id', $keep ?: [0])->delete();
+        foreach ($keep as $userId) {
+            CourseTeacher::query()->firstOrCreate(
+                ['course_id' => $course->id, 'user_id' => $userId],
+                ['school_id' => $course->school_id]
+            );
+        }
+
+        $this->setAudience($course, $classIds);
+
+        return $course->fresh();
+    }
+
+    /** Ensure allocated class-subjects have matching LMS courses (one teacher, or the whole school). */
+    public function syncAllocatedCourses(?User $teacher = null): void
+    {
+        $query = ClassSubject::query()->whereNotNull('teacher_id');
+        if ($teacher) {
+            $query->where('teacher_id', $teacher->id);
+        }
+        $subjectIds = $query->pluck('subject_id')->unique()->filter()->all();
+        if ($subjectIds === []) {
+            return;
+        }
+
+        foreach (Subject::query()->whereIn('id', $subjectIds)->get() as $subject) {
+            $this->syncSubjectCourse($subject);
+        }
     }
 
     public function teachesSubject(User $user, int $subjectId): bool

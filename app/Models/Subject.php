@@ -20,4 +20,9 @@ class Subject extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
+    public function course(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Course::class);
+    }
 }
