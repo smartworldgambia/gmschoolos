@@ -252,6 +252,7 @@ function AddSubject({ departments }) {
             <button type="submit" className="btn-teal" disabled={processing}>
                 {t('acad.common.add')}
             </button>
+            <p className="w-full text-xs text-slate-500">{t('academics.subject.lmsHint')}</p>
         </form>
     );
 }

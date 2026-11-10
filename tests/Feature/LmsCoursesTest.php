@@ -36,6 +36,32 @@ class LmsCoursesTest extends Phase7TestCase
         $this->assertSame('class', CourseEnrolment::query()->where('student_id', $a->id)->value('source'));
     }
 
+    public function test_an_allocated_subject_appears_as_the_teachers_lms_course(): void
+    {
+        [, $learner] = $this->learner();
+        $maths = $this->subject('Mathematics');
+        $this->allocate($this->teacher, $maths);
+
+        $this->actAs($this->teacher)->get(route('lms.courses.index'))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p
+                ->where('mode', 'author')
+                ->has('courses', 1)
+                ->where('courses.0.title', 'Mathematics')
+                ->where('courses.0.subject', 'Mathematics')
+                ->where('courses.0.teacher', $this->teacher->name));
+
+        app(\App\Support\TenantContext::class)->set($this->school);
+        $course = Course::query()->where('subject_id', $maths->id)->firstOrFail();
+        $this->assertSame($this->teacher->id, (int) $course->teacher_id);
+        $this->assertSame('published', $course->status);
+        $this->assertTrue(\App\Models\CourseEnrolment::query()->where('course_id', $course->id)->where('student_id', $learner->id)->where('status', 'active')->exists());
+
+        $this->actAs($this->teacher)->get(route('teacher.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p->where('stats.courses', 1));
+    }
+
     public function test_a_teacher_may_only_create_courses_for_subjects_they_are_allocated_to(): void
     {
         $maths = $this->subject('Mathematics');
