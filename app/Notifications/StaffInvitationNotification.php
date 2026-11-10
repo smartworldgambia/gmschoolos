@@ -3,25 +3,24 @@
 namespace App\Notifications;
 
 use App\Models\School;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-/** Sent on-demand to the invitee's address. Carries the one-time acceptance link. */
-class StaffInvitationNotification extends Notification implements ShouldQueue
+/**
+ * Sent on-demand to the invitee's address. Carries the one-time acceptance link.
+ *
+ * Not queued: the `notifications` worker is optional/sheddable, and Laravel Cloud
+ * typically only processes `default`. Invitation mail must leave in the same request.
+ */
+class StaffInvitationNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public School $school,
         public string $inviteeName,
         public string $roleLabel,
         public string $acceptUrl,
         public string $expiresOn,
-    ) {
-        $this->onQueue(config('schoolos.queues.notifications', 'notifications'));
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
