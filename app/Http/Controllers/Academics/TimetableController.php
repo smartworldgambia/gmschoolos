@@ -12,7 +12,6 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\TeacherUnavailability;
 use App\Models\TimetableSlot;
-use App\Models\User;
 use App\Exceptions\AcademicRuleException;
 use App\Services\Academics\TimetableValidator;
 use Illuminate\Http\RedirectResponse;
@@ -265,7 +264,6 @@ class TimetableController extends Controller
 
     protected function teachers()
     {
-        return User::query()->where('school_id', $this->schoolId())->permission('portal.teacher')
-            ->orderBy('name')->get(['id', 'name'])->unique('id')->values();
+        return $this->teachingStaff();
     }
 }

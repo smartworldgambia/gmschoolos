@@ -372,6 +372,24 @@ class AcademicReportsTest extends Phase6TestCase
         $this->refuses('err.rpt.notYourClass', fn () => $this->reports->generate($teacher, $other, 'termly', $this->year(), $this->term(1)));
     }
 
+    public function test_primary_termly_reports_show_classroom_position_and_nursery_does_not(): void
+    {
+        $primary = $this->studentAt(5);
+        $this->allocate($primary);
+        $this->publish($primary, 1, 80, $this->english);
+        $this->publish($primary, 1, 70, $this->maths);
+        $primaryCard = $this->compiler->compileTermly($primary, $this->term(1));
+        $this->assertSame(1, $primaryCard['summary']['position']);
+        $this->assertSame(1, $primaryCard['summary']['out_of']);
+
+        $nursery = $this->studentAt(0);
+        $this->allocate($nursery);
+        $this->publish($nursery, 1, 90, $this->english);
+        $this->publish($nursery, 1, 85, $this->maths);
+        $nurseryCard = $this->compiler->compileTermly($nursery, $this->term(1));
+        $this->assertNull($nurseryCard['summary']['position']);
+    }
+
     public function test_pdf_renderer_produces_bytes_for_a_draft(): void
     {
         $student = $this->studentAt(5);

@@ -29,6 +29,31 @@ const HASH_VIEWS = {
     '#content': 'materials',
 };
 
+function uniqueNames(values) {
+    return [...new Set(values.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function defaultGroupBy(courses) {
+    const subjects = uniqueNames(courses.map((c) => c.subject));
+    const rooms = uniqueNames(courses.flatMap((c) => [c.classroom, ...(c.classes ?? [])]));
+    if (subjects.length === 1 && rooms.length > 1) {
+        return 'subject';
+    }
+
+    return 'classroom';
+}
+
+function courseGroupKey(course, groupBy) {
+    if (groupBy === 'subject') {
+        return course.subject || '';
+    }
+    if (groupBy === 'teacher') {
+        return course.teacher || '';
+    }
+
+    return course.classroom || (course.classes ?? []).filter(Boolean)[0] || '';
+}
+
 function viewFromHash() {
     if (typeof window === 'undefined') {
         return 'courses';
@@ -122,6 +147,9 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
     const author = mode === 'author';
     const [q, setQ] = useState('');
     const [classFilter, setClassFilter] = useState('');
+    const [subjectFilter, setSubjectFilter] = useState('');
+    const [teacherFilter, setTeacherFilter] = useState('');
+    const [groupBy, setGroupBy] = useState(() => defaultGroupBy(courses));
     const [statusFilter, setStatusFilter] = useState('');
     const [scope, setScope] = useState('current');
     const [sort, setSort] = useState('title');
@@ -142,7 +170,9 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
         setView(next);
     };
 
-    const classOptions = useMemo(() => [...new Set(courses.flatMap((c) => c.classes ?? []).filter(Boolean))].sort(), [courses]);
+    const classOptions = useMemo(() => uniqueNames(courses.flatMap((c) => [c.classroom, ...(c.classes ?? [])])), [courses]);
+    const subjectOptions = useMemo(() => uniqueNames(courses.map((c) => c.subject)), [courses]);
+    const teacherOptions = useMemo(() => uniqueNames(courses.map((c) => c.teacher)), [courses]);
 
     const shown = useMemo(() => {
         const needle = q.trim().toLowerCase();
@@ -150,9 +180,11 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
         const rows = courses.filter((c) => {
             if (scope === 'current' && author && c.status !== 'published') return false;
             if (statusFilter && c.status !== statusFilter) return false;
-            if (classFilter && !(c.classes ?? []).includes(classFilter)) return false;
+            if (subjectFilter && c.subject !== subjectFilter) return false;
+            if (teacherFilter && c.teacher !== teacherFilter) return false;
+            if (classFilter && c.classroom !== classFilter && !(c.classes ?? []).includes(classFilter)) return false;
             if (!needle) return true;
-            const hay = [c.title, c.subject, c.teacher, c.code, c.category, ...(c.classes ?? [])].join(' ').toLowerCase();
+            const hay = [c.title, c.subject, c.teacher, c.classroom, c.code, c.category, ...(c.classes ?? [])].join(' ').toLowerCase();
 
             return hay.includes(needle);
         });
@@ -170,7 +202,21 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
         });
 
         return copy;
-    }, [courses, q, classFilter, statusFilter, scope, sort, author]);
+    }, [courses, q, classFilter, subjectFilter, teacherFilter, statusFilter, scope, sort, author]);
+
+    const grouped = useMemo(() => {
+        const map = new Map();
+        shown.forEach((course) => {
+            const raw = courseGroupKey(course, groupBy);
+            const key = raw || t('lms.dash.ungrouped');
+            if (!map.has(key)) {
+                map.set(key, []);
+            }
+            map.get(key).push(course);
+        });
+
+        return [...map.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    }, [shown, groupBy, t]);
 
     const dueSoon = timeline.filter((i) => i.state === 'due' || i.state === 'to_mark').length;
     const assignmentOverdue = timeline.filter((i) => i.kind === 'assignment' && i.state === 'overdue').length;
@@ -290,7 +336,7 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
                                 />
                             </label>
                             <label className="block text-sm font-medium text-slate-700">
-                                <span className="sr-only">{t('lms.dash.filterClass')}</span>
+                                <span className="sr-only">{t('lms.dash.filterCurrent')}</span>
                                 <select
                                     value={statusFilter || scope}
                                     onChange={(e) => {
@@ -319,19 +365,47 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
                                         : null}
                                 </select>
                             </label>
-                            {classOptions.length > 1 ? (
-                                <label className="block text-sm font-medium text-slate-700">
-                                    <span className="sr-only">{t('lms.dash.filterClass')}</span>
-                                    <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="ui-input min-w-[10rem]">
-                                        <option value="">{t('lms.dash.filterAll')}</option>
-                                        {classOptions.map((name) => (
-                                            <option key={name} value={name}>
-                                                {name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                            ) : null}
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                <span className="whitespace-nowrap">{t('lms.dash.filterSubject')}</span>
+                                <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="ui-input min-w-[9rem]" aria-label={t('lms.dash.filterSubject')}>
+                                    <option value="">{t('lms.dash.filterAll')}</option>
+                                    {subjectOptions.map((name) => (
+                                        <option key={name} value={name}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                <span className="whitespace-nowrap">{t('lms.dash.filterTeacher')}</span>
+                                <select value={teacherFilter} onChange={(e) => setTeacherFilter(e.target.value)} className="ui-input min-w-[9rem]" aria-label={t('lms.dash.filterTeacher')}>
+                                    <option value="">{t('lms.dash.filterAll')}</option>
+                                    {teacherOptions.map((name) => (
+                                        <option key={name} value={name}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                <span className="whitespace-nowrap">{t('lms.dash.filterClass')}</span>
+                                <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="ui-input min-w-[9rem]" aria-label={t('lms.dash.filterClass')}>
+                                    <option value="">{t('lms.dash.filterAll')}</option>
+                                    {classOptions.map((name) => (
+                                        <option key={name} value={name}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                <span className="whitespace-nowrap">{t('lms.dash.groupBy')}</span>
+                                <select value={groupBy} onChange={(e) => setGroupBy(e.target.value)} className="ui-input min-w-[9rem]" aria-label={t('lms.dash.groupBy')}>
+                                    <option value="classroom">{t('lms.dash.groupClassroom')}</option>
+                                    <option value="subject">{t('lms.dash.groupSubject')}</option>
+                                    <option value="teacher">{t('lms.dash.groupTeacher')}</option>
+                                </select>
+                            </label>
                             <label className="block text-sm font-medium text-slate-700">
                                 <span className="sr-only">{t('lms.dash.sortLabel')}</span>
                                 <select value={sort} onChange={(e) => setSort(e.target.value)} className="ui-input min-w-[11rem]">
@@ -377,15 +451,22 @@ export default function Index({ courses = [], mode = 'none', can = {}, timeline 
                     ) : shown.length === 0 ? (
                         <LmsEmptyState icon="search" title={t('lms.dash.noMatches')} body={t('lms.dash.noMatchesHelp')} />
                     ) : (
-                        <div
-                            className={
-                                layout === 'list'
-                                    ? 'grid gap-4'
-                                    : `lms-course-grid ${tone.nursery ? 'lms-course-grid-simple sm:grid-cols-1 lg:grid-cols-2' : ''}`
-                            }
-                        >
-                            {shown.map((course, i) => (
-                                <CourseCard key={course.id} course={course} author={author} t={t} tone={tone} index={i} layout={layout} />
+                        <div className="space-y-6">
+                            {grouped.map(([label, rows]) => (
+                                <section key={label}>
+                                    <h3 className="mb-3 text-sm font-semibold text-navy">{label}</h3>
+                                    <div
+                                        className={
+                                            layout === 'list'
+                                                ? 'grid gap-4'
+                                                : `lms-course-grid ${tone.nursery ? 'lms-course-grid-simple sm:grid-cols-1 lg:grid-cols-2' : ''}`
+                                        }
+                                    >
+                                        {rows.map((course, i) => (
+                                            <CourseCard key={course.id} course={course} author={author} t={t} tone={tone} index={i} layout={layout} />
+                                        ))}
+                                    </div>
+                                </section>
                             ))}
                         </div>
                     )}

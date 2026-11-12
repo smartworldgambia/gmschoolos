@@ -5,20 +5,53 @@ import AppShell from '@/Layouts/AppShell';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
-function Copy({ classes, selected }) {
+function CopyFrom({ classes, selected }) {
+    const { t } = useLocale();
+    const [fromId, setFromId] = useState('');
+    const others = classes.filter((c) => c.id !== selected);
+
+    function submit(e) {
+        e.preventDefault();
+        if (!fromId || !confirm(t('allocation.confirmCopy'))) return;
+        router.post(route('academics.curriculum.copy', selected), { from_class_id: Number(fromId) }, { preserveScroll: true, onSuccess: () => setFromId('') });
+    }
+
+    return (
+        <Card title={t('allocation.copyTitle')}>
+            <p className="mb-3 text-xs text-slate-500">{t('allocation.copyHint')}</p>
+            <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+                <Field label={t('allocation.copyFrom')}>
+                    <Select value={fromId} onChange={(e) => setFromId(e.target.value)} className="!w-auto">
+                        <option value="">{t('acad.common.choose')}</option>
+                        {others.map((c) => (
+                            <option key={c.id} value={c.id}>
+                                {c.name}
+                            </option>
+                        ))}
+                    </Select>
+                </Field>
+                <button type="submit" className="btn-outline" disabled={!fromId}>
+                    {t('allocation.copy')}
+                </button>
+            </form>
+        </Card>
+    );
+}
+
+function CopyTo({ classes, selected }) {
     const { t } = useLocale();
     const [ids, setIds] = useState([]);
     const others = classes.filter((c) => c.id !== selected);
 
     function submit(e) {
         e.preventDefault();
-        if (ids.length === 0 || !confirm(t('allocation.confirmCopy'))) return;
+        if (ids.length === 0 || !confirm(t('allocation.confirmCopyTo'))) return;
         router.post(route('academics.curriculum.copy', selected), { class_ids: ids }, { preserveScroll: true, onSuccess: () => setIds([]) });
     }
 
     return (
-        <Card title={t('allocation.copyTitle')}>
-            <p className="mb-3 text-xs text-slate-500">{t('allocation.copyHint')}</p>
+        <Card title={t('allocation.copyToTitle')}>
+            <p className="mb-3 text-xs text-slate-500">{t('allocation.copyToHint')}</p>
             <form onSubmit={submit}>
                 <div className="flex flex-wrap gap-3">
                     {others.map((c) => (
@@ -43,8 +76,12 @@ function Copy({ classes, selected }) {
 
 function AllocationInner({ classes = [], selected, curriculum = [], subjects = [], teachers = [], can = {}, nav = [], user, school, academicYear }) {
     const { t } = useLocale();
-    const { data, setData, put, processing, errors, reset } = useForm({
-        rows: curriculum.map((r) => ({ subject_id: r.subject_id, teacher_id: r.teacher_id ?? '', periods_per_week: r.periods_per_week ?? '' })),
+    const { data, setData, put, processing, errors } = useForm({
+        rows: curriculum.map((r) => ({
+            subject_id: r.subject_id,
+            teacher_id: r.teacher_id != null && r.teacher_id !== '' ? String(r.teacher_id) : '',
+            periods_per_week: r.periods_per_week ?? '',
+        })),
     });
     const [addId, setAddId] = useState('');
     const subjectName = (id) => subjects.find((s) => s.id === Number(id))?.name ?? id;
@@ -90,6 +127,15 @@ function AllocationInner({ classes = [], selected, curriculum = [], subjects = [
                         {t('academics.class.classTeacher')}: <span className="font-medium text-navy">{currentClass.class_teacher ?? '—'}</span>
                     </span>
                 ) : null}
+                {can.manage && currentClass?.homeroom && currentClass.class_teacher_id ? (
+                    <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => router.post(route('academics.curriculum.homeroom', selected), {}, { preserveScroll: true })}
+                    >
+                        {t('allocation.applyHomeroom')}
+                    </button>
+                ) : null}
             </div>
 
             {selected ? (
@@ -103,7 +149,7 @@ function AllocationInner({ classes = [], selected, curriculum = [], subjects = [
                                     <thead>
                                         <tr className="text-xs uppercase text-slate-500">
                                             <th className="px-3 py-2 text-start">{t('academics.subject.name')}</th>
-                                            <th className="px-3 py-2 text-start">{t('allocation.teacher')}</th>
+                                            <th className="px-3 py-2 text-start">{t('allocation.subjectTeacher')}</th>
                                             <th className="px-3 py-2 text-start">{t('allocation.periods')}</th>
                                             <th />
                                         </tr>
@@ -118,12 +164,19 @@ function AllocationInner({ classes = [], selected, curriculum = [], subjects = [
                                         ) : null}
                                         {data.rows.map((r, i) => (
                                             <tr key={r.subject_id} className="border-t border-slate-100">
-                                                <td className="px-3 py-2 font-medium text-navy">{subjectName(r.subject_id)}</td>
+                                                <td className="px-3 py-2 font-medium text-navy">
+                                                    {subjectName(r.subject_id)}
+                                                    {subjects.find((s) => s.id === Number(r.subject_id))?.is_specialist ? (
+                                                        <span className="ms-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                                            {t('academics.subject.specialistShort')}
+                                                        </span>
+                                                    ) : null}
+                                                </td>
                                                 <td className="px-3 py-2">
-                                                    <Select value={r.teacher_id} onChange={(e) => setRow(i, 'teacher_id', e.target.value)} disabled={!can.manage}>
+                                                    <Select value={r.teacher_id === '' || r.teacher_id == null ? '' : String(r.teacher_id)} onChange={(e) => setRow(i, 'teacher_id', e.target.value)} disabled={!can.manage}>
                                                         <option value="">{t('allocation.unassigned')}</option>
                                                         {teachers.map((x) => (
-                                                            <option key={x.id} value={x.id}>
+                                                            <option key={x.id} value={String(x.id)}>
                                                                 {x.name}
                                                             </option>
                                                         ))}
@@ -175,7 +228,12 @@ function AllocationInner({ classes = [], selected, curriculum = [], subjects = [
                             ) : null}
                         </Card>
                     </form>
-                    {can.manage ? <Copy classes={classes} selected={selected} /> : null}
+                    {can.manage ? (
+                        <div className="grid gap-6 lg:grid-cols-2">
+                            <CopyFrom classes={classes} selected={selected} />
+                            <CopyTo classes={classes} selected={selected} />
+                        </div>
+                    ) : null}
                 </div>
             ) : (
                 <p className="rounded-xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm">{t('allocation.noClass')}</p>
@@ -185,6 +243,7 @@ function AllocationInner({ classes = [], selected, curriculum = [], subjects = [
 }
 
 export default function Allocation(props) {
-    // remount per class so the editable rows always start from that class
-    return <AllocationInner key={props.selected ?? 'none'} {...props} />;
+    // remount when the class or saved teachers change so the admin can edit the stored allocation
+    const stamp = (props.curriculum ?? []).map((r) => `${r.subject_id}:${r.teacher_id ?? ''}:${r.periods_per_week ?? ''}`).join('|');
+    return <AllocationInner key={`${props.selected ?? 'none'}-${stamp}`} {...props} />;
 }

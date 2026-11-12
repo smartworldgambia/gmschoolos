@@ -497,6 +497,66 @@ class AcademicOperationsTest extends TestCase
         $this->actingAs($teacher)->get(route('academics.allocation'))->assertOk();
     }
 
+    public function test_admin_can_change_the_subject_teacher_and_the_list_includes_teachers_not_only_class_teachers(): void
+    {
+        $subjectTeacher = $this->user('teacher');
+        $classTeacher = $this->user('class_teacher');
+        $this->class->update(['class_teacher_id' => $classTeacher->id]);
+
+        $this->actingAs($this->admin)->put(route('academics.curriculum.save', $this->class), ['rows' => [
+            ['subject_id' => $this->maths->id, 'teacher_id' => $subjectTeacher->id],
+        ]])->assertSessionHas('success');
+        $this->assertSame($subjectTeacher->id, (int) ClassSubject::query()->where('school_class_id', $this->class->id)->where('subject_id', $this->maths->id)->value('teacher_id'));
+
+        $replacement = $this->user('teacher');
+        $this->actingAs($this->admin)->put(route('academics.curriculum.save', $this->class), ['rows' => [
+            ['subject_id' => $this->maths->id, 'teacher_id' => $replacement->id],
+        ]])->assertSessionHas('success');
+        $this->assertSame($replacement->id, (int) ClassSubject::query()->where('school_class_id', $this->class->id)->where('subject_id', $this->maths->id)->value('teacher_id'));
+
+        $this->actingAs($this->admin)->get(route('academics.allocation', ['class_id' => $this->class->id]))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p
+                ->has('teachers')
+                ->where('teachers', fn ($teachers) => collect($teachers)->pluck('id')->contains($subjectTeacher->id)
+                    && collect($teachers)->pluck('id')->contains($classTeacher->id)
+                    && collect($teachers)->pluck('id')->contains($replacement->id)
+                    && ! collect($teachers)->pluck('id')->contains($this->admin->id)));
+
+        $this->actingAs($this->admin)->get(route('academics.index'))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p
+                ->where('subjects', fn ($subjects) => collect($subjects)->firstWhere('name', 'Mathematics')['teachers'] === [$replacement->name])
+                ->where('classes.0.class_teacher_id', $classTeacher->id));
+    }
+
+    public function test_copy_from_another_class_imports_into_the_current_class_and_copy_to_pushes_out(): void
+    {
+        $teacher = $this->user('teacher');
+        $this->actingAs($this->admin)->put(route('academics.curriculum.save', $this->otherClass), ['rows' => [
+            ['subject_id' => $this->english->id, 'teacher_id' => $teacher->id, 'periods_per_week' => 4],
+        ]])->assertSessionHas('success');
+
+        $this->actingAs($this->admin)->post(route('academics.curriculum.copy', $this->class), [
+            'from_class_id' => $this->otherClass->id,
+        ])->assertSessionHas('success');
+        $imported = ClassSubject::query()->where('school_class_id', $this->class->id)->where('subject_id', $this->english->id)->first();
+        $this->assertNotNull($imported);
+        $this->assertSame($teacher->id, (int) $imported->teacher_id);
+
+        $this->actingAs($this->admin)->put(route('academics.curriculum.save', $this->class), ['rows' => [
+            ['subject_id' => $this->maths->id, 'teacher_id' => $teacher->id],
+            ['subject_id' => $this->english->id, 'teacher_id' => $teacher->id],
+        ]])->assertSessionHas('success');
+
+        $third = SchoolClass::query()->create(['school_id' => $this->school->id, 'level_id' => $this->class->level_id, 'name' => 'Grade 7C', 'capacity' => 40]);
+        $this->actingAs($this->admin)->post(route('academics.curriculum.copy', $this->class), [
+            'class_ids' => [$third->id],
+        ])->assertSessionHas('success');
+        $this->assertTrue(ClassSubject::query()->where('school_class_id', $third->id)->where('subject_id', $this->maths->id)->exists());
+        $this->assertSame($teacher->id, (int) ClassSubject::query()->where('school_class_id', $third->id)->where('subject_id', $this->maths->id)->value('teacher_id'));
+    }
+
     public function test_department_head_and_structure_changes_are_permissioned(): void
     {
         $head = $this->user('head_of_department');

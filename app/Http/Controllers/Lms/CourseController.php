@@ -47,14 +47,27 @@ class CourseController extends Controller
         }
 
         $query = Course::query()
-            ->with(['teacher:id,name', 'subject:id,name', 'category:id,name', 'audiences.schoolClass:id,name'])
+            ->with(['teacher:id,name', 'subject:id,name', 'category:id,name', 'schoolClass:id,name', 'audiences.schoolClass:id,name'])
             ->withCount(['lessons', 'assignments', 'quizzes'])
             ->orderBy('title');
         if ($manager) {
             $mode = 'author';
         } elseif ($teaching) {
             $mode = 'author';
-            $query->where(fn ($w) => $w->where('teacher_id', $user->id)->orWhereIn('id', CourseTeacher::query()->where('user_id', $user->id)->select('course_id')));
+            $homeroomClassIds = SchoolClass::query()->where('class_teacher_id', $user->id)->pluck('id');
+            $query->where(function ($w) use ($user, $homeroomClassIds) {
+                $w->where('teacher_id', $user->id)
+                    ->orWhereIn('id', CourseTeacher::query()->where('user_id', $user->id)->select('course_id'));
+                if ($homeroomClassIds->isNotEmpty()) {
+                    $w->orWhere(function ($h) use ($homeroomClassIds) {
+                        $h->whereIn('school_class_id', $homeroomClassIds)
+                            ->where(function ($s) {
+                                $s->whereDoesntHave('subject')
+                                    ->orWhereHas('subject', fn ($q) => $q->where('is_specialist', false));
+                            });
+                    });
+                }
+            });
         } elseif ($student) {
             $mode = 'learner';
             $query->where('status', 'published')->whereIn('id', CourseEnrolment::query()->where('student_id', $student->id)->where('status', 'active')->select('course_id'));
@@ -79,12 +92,16 @@ class CourseController extends Controller
                     $progress = $visible->count() ? (int) round($count / $visible->count() * 100) : null;
                 }
 
+                $classes = $c->audiences->pluck('schoolClass.name')->filter()->unique()->values()
+                    ->whenEmpty(fn () => collect([$c->schoolClass?->name])->filter()->values());
+
                 return [
                     'id' => $c->id, 'title' => $c->title, 'code' => $c->code, 'status' => $c->status, 'teacher' => $c->teacher?->name,
                     'subject' => $c->subject?->name, 'category' => $c->category?->name, 'lessons_count' => $c->lessons_count,
                     'assignments_count' => $c->assignments_count, 'quizzes_count' => $c->quizzes_count,
                     'enrolled' => ($enrolled->get($c->id) ?? collect())->count(), 'progress_percent' => $progress,
-                    'classes' => $c->audiences->pluck('schoolClass.name')->filter()->unique()->values(),
+                    'classroom' => $c->schoolClass?->name ?? $classes->first(),
+                    'classes' => $classes,
                     'url' => route('lms.courses.show', $c),
                 ];
             })->values(),

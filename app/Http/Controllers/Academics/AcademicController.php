@@ -6,12 +6,11 @@ use App\Exceptions\AcademicRuleException;
 use App\Http\Controllers\Concerns\HandlesAcademicRules;
 use App\Http\Controllers\Concerns\SharesSchoolShell;
 use App\Http\Controllers\Controller;
-use App\Models\ClassSubject;
 use App\Models\Department;
 use App\Models\Level;
 use App\Models\SchoolClass;
 use App\Models\Subject;
-use App\Models\User;
+use App\Services\Academics\HomeroomService;
 use App\Services\Lms\CourseService;
 use App\Services\Onboarding\SetupWizard;
 use Illuminate\Http\RedirectResponse;
@@ -49,22 +48,30 @@ class AcademicController extends Controller
                 'capacity' => $class->capacity,
             ]);
 
-        $subjects = Subject::query()->with('department')
+        $subjects = Subject::query()->with(['department', 'classSubjects.teacher:id,name'])
             ->withCount('classSubjects')->orderBy('name')->get()
             ->map(fn (Subject $s) => [
                 'id' => $s->id, 'name' => $s->name, 'code' => $s->code,
                 'department_id' => $s->department_id, 'department' => $s->department?->name,
-                'classes_count' => $s->class_subjects_count,
+                'classes_count' => $s->class_subjects_count, 'is_specialist' => (bool) $s->is_specialist,
+                'teachers' => $s->classSubjects->pluck('teacher.name')->filter()->unique()->values()->all(),
             ]);
 
         return Inertia::render('Academics/Index', array_merge($this->shellProps(), [
             'classes' => $classes,
             'subjects' => $subjects,
-            'levels' => Level::query()->orderBy('sort_order')->get(['id', 'name', 'code']),
+            'levels' => Level::query()->orderBy('sort_order')->get(['id', 'name', 'code', 'teaching_model', 'grade_number'])
+                ->map(fn (Level $l) => [
+                    'id' => $l->id, 'name' => $l->name, 'code' => $l->code, 'grade_number' => $l->grade_number,
+                    'teaching_model' => app(HomeroomService::class)->modelFor($l),
+                ]),
             'departments' => Department::query()->with('head')->orderBy('name')->get()->map(fn ($d) => [
                 'id' => $d->id, 'name' => $d->name, 'code' => $d->code, 'head_user_id' => $d->head_user_id, 'head' => $d->head?->name,
             ]),
-            'teachers' => $this->teachers(),
+            'teachers' => $this->teachingStaff(array_merge(
+                $classes->pluck('class_teacher_id')->all(),
+                Department::query()->whereNotNull('head_user_id')->pluck('head_user_id')->all(),
+            )),
             'can' => ['manage' => $user->can('academics.manage')],
             'links' => [
                 'allocation' => route('academics.allocation'),
@@ -78,8 +85,23 @@ class AcademicController extends Controller
 
     public function storeLevel(Request $request, SetupWizard $wizard): RedirectResponse
     {
-        $v = $request->validate(['name' => ['required', 'string', 'max:100'], 'code' => ['nullable', 'string', 'max:20']]);
-        $wizard->addLevel(auth()->user()->school, $v['name'], $v['code'] ?? null);
+        $v = $request->validate([
+            'name' => ['required', 'string', 'max:100'], 'code' => ['nullable', 'string', 'max:20'],
+            'teaching_model' => ['nullable', 'in:homeroom,specialist'],
+        ]);
+        $level = $wizard->addLevel(auth()->user()->school, $v['name'], $v['code'] ?? null);
+        if (! empty($v['teaching_model'])) {
+            $level->update(['teaching_model' => $v['teaching_model']]);
+        }
+
+        return back()->with('success', 'ok.saved');
+    }
+
+    public function updateLevel(Request $request, int $level): RedirectResponse
+    {
+        $record = Level::query()->findOrFail($level);
+        $v = $request->validate(['teaching_model' => ['required', 'in:homeroom,specialist']]);
+        $record->update(['teaching_model' => $v['teaching_model']]);
 
         return back()->with('success', 'ok.saved');
     }
@@ -98,8 +120,16 @@ class AcademicController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'stream' => ['nullable', 'string', 'max:50'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'class_teacher_id' => ['nullable', $this->inSchool('users')],
         ]);
-        $wizard->addClass(auth()->user()->school, (int) $v['level_id'], $v['name'], $v['stream'] ?? null, $v['capacity'] ?? null);
+        if (! empty($v['class_teacher_id']) && ! $this->teachingStaff([(int) $v['class_teacher_id']])->contains('id', (int) $v['class_teacher_id'])) {
+            return back()->with('error', 'err.class.teacherInvalid')->withInput();
+        }
+        $class = $wizard->addClass(auth()->user()->school, (int) $v['level_id'], $v['name'], $v['stream'] ?? null, $v['capacity'] ?? null);
+        if (! empty($v['class_teacher_id'])) {
+            $class->update(['class_teacher_id' => $v['class_teacher_id']]);
+            app(HomeroomService::class)->applyClassTeacher($class->fresh(['level']));
+        }
 
         return back()->with('success', 'ok.saved');
     }
@@ -115,7 +145,7 @@ class AcademicController extends Controller
         ]);
 
         return $this->attempt(function () use ($record, $v) {
-            if (! empty($v['class_teacher_id']) && ! $this->teachers()->contains('id', (int) $v['class_teacher_id'])) {
+            if (! empty($v['class_teacher_id']) && ! $this->teachingStaff([(int) $v['class_teacher_id']])->contains('id', (int) $v['class_teacher_id'])) {
                 throw AcademicRuleException::because('err.class.teacherInvalid');
             }
             if ($v['capacity'] ?? null) {
@@ -135,6 +165,7 @@ class AcademicController extends Controller
                 'name' => trim($v['name']), 'stream' => $v['stream'] ?? null,
                 'capacity' => $v['capacity'] ?? null, 'class_teacher_id' => $v['class_teacher_id'] ?? null,
             ]);
+            app(HomeroomService::class)->applyClassTeacher($record->fresh(['level']));
         });
     }
 
@@ -152,11 +183,15 @@ class AcademicController extends Controller
         $v = $request->validate([
             'name' => ['required', 'string', 'max:150'], 'code' => ['nullable', 'string', 'max:20'],
             'department_id' => ['nullable', $this->inSchool('departments')],
+            'is_specialist' => ['nullable', 'boolean'],
         ]);
         $subject = $wizard->addSubject(auth()->user()->school, $v['name'], $v['code'] ?? null);
-        if (! empty($v['department_id'])) {
-            $subject->update(['department_id' => $v['department_id']]);
-        }
+        $subject->update([
+            'department_id' => $v['department_id'] ?? null,
+            'is_specialist' => array_key_exists('is_specialist', $v)
+                ? (bool) $v['is_specialist']
+                : Subject::guessSpecialist($v['name'], (string) ($v['code'] ?? '')),
+        ]);
         app(CourseService::class)->syncSubjectCourse($subject->fresh());
 
         return back()->with('success', 'ok.saved');
@@ -168,6 +203,7 @@ class AcademicController extends Controller
         $v = $request->validate([
             'name' => ['required', 'string', 'max:150'], 'code' => ['nullable', 'string', 'max:20'],
             'department_id' => ['nullable', $this->inSchool('departments')],
+            'is_specialist' => ['nullable', 'boolean'],
         ]);
 
         return $this->attempt(function () use ($record, $v) {
@@ -178,7 +214,10 @@ class AcademicController extends Controller
             if ($dup) {
                 throw AcademicRuleException::because('err.name.taken');
             }
-            $record->update(['name' => trim($v['name']), 'code' => $code, 'department_id' => $v['department_id'] ?? null]);
+            $record->update([
+                'name' => trim($v['name']), 'code' => $code, 'department_id' => $v['department_id'] ?? null,
+                'is_specialist' => array_key_exists('is_specialist', $v) ? (bool) $v['is_specialist'] : $record->is_specialist,
+            ]);
             app(CourseService::class)->syncSubjectCourse($record->fresh());
         });
     }
@@ -207,7 +246,7 @@ class AcademicController extends Controller
         ]);
 
         return $this->attempt(function () use ($record, $v) {
-            if (! empty($v['head_user_id']) && ! $this->teachers()->contains('id', (int) $v['head_user_id'])) {
+            if (! empty($v['head_user_id']) && ! $this->teachingStaff([(int) $v['head_user_id']])->contains('id', (int) $v['head_user_id'])) {
                 throw AcademicRuleException::because('err.department.headInvalid');
             }
             if (Department::query()->where('id', '!=', $record->id)->whereRaw('lower(name) = ?', [mb_strtolower(trim($v['name']))])->exists()) {
@@ -224,10 +263,4 @@ class AcademicController extends Controller
         return back()->with('success', 'ok.removed');
     }
 
-    /** Staff who may be allocated to classes and subjects: school users holding the teacher-portal permission. */
-    protected function teachers()
-    {
-        return User::query()->where('school_id', $this->schoolId())->permission('portal.teacher')
-            ->orderBy('name')->get(['id', 'name'])->unique('id')->values();
-    }
 }

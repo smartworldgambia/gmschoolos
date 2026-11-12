@@ -77,7 +77,24 @@ class CourseService
             ];
 
             if (! $course && $subjectId) {
-                $course = Course::query()->where('subject_id', $subjectId)->orderBy('id')->first();
+                $reuse = Course::query()->where('subject_id', $subjectId);
+                if ($classIds->count() === 1) {
+                    $reuse->where('school_class_id', $classIds->first());
+                } else {
+                    $allocated = ClassSubject::query()->where('subject_id', $subjectId)
+                        ->when(! $manager, fn ($q) => $q->where('teacher_id', $actor->id))
+                        ->pluck('school_class_id')->unique()->filter();
+                    if ($classIds->isEmpty() && $allocated->count() === 1) {
+                        $reuse->where('school_class_id', $allocated->first());
+                    } else {
+                        $reuse->whereRaw('1 = 0');
+                    }
+                }
+                $course = $reuse->orderBy('id')->first();
+            }
+
+            if ($classIds->count() === 1) {
+                $attrs['school_class_id'] = $classIds->first();
             }
 
             if (! $course) {
@@ -104,53 +121,75 @@ class CourseService
     }
 
     /**
-     * One LMS course per academic subject: the same offering teachers are allocated to in Academics.
+     * One LMS course per class-subject. ICT in Nursery A is not the same offering as ICT in 10A.
      * Basic schools call that a subject; tertiary schools call it a course.
      */
-    public function syncSubjectCourse(Subject $subject): Course
+    public function syncSubjectCourse(Subject $subject): void
     {
         $allocations = ClassSubject::query()->withoutGlobalScopes()
-            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)->get();
-        $teacherIds = $allocations->pluck('teacher_id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
-        $classIds = $allocations->pluck('school_class_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)
+            ->orderBy('id')->get();
+
+        $legacy = Course::query()->withoutGlobalScopes()
+            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)
+            ->whereNull('school_class_id')->orderBy('id')->get()->values();
+        $legacyIndex = 0;
+        $keepIds = [];
+
+        foreach ($allocations as $row) {
+            $claimed = null;
+            $already = Course::query()->withoutGlobalScopes()
+                ->where('school_id', $row->school_id)->where('subject_id', $row->subject_id)
+                ->where('school_class_id', $row->school_class_id)->exists();
+            if (! $already && $legacyIndex < $legacy->count()) {
+                $claimed = $legacy[$legacyIndex++];
+            }
+            $keepIds[] = $this->syncClassSubjectCourse($row, $subject, $claimed)->id;
+        }
+
+        Course::query()->withoutGlobalScopes()
+            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)
+            ->when($keepIds !== [], fn ($q) => $q->whereNotIn('id', $keepIds), fn ($q) => $q)
+            ->where('status', '!=', 'archived')
+            ->update(['status' => 'archived']);
+    }
+
+    public function syncClassSubjectCourse(ClassSubject $row, ?Subject $subject = null, ?Course $reuse = null): Course
+    {
+        $subject ??= Subject::query()->withoutGlobalScopes()->find($row->subject_id);
 
         $course = Course::query()->withoutGlobalScopes()
-            ->where('school_id', $subject->school_id)->where('subject_id', $subject->id)->orderBy('id')->first();
+            ->where('school_id', $row->school_id)
+            ->where('subject_id', $row->subject_id)
+            ->where('school_class_id', $row->school_class_id)
+            ->orderBy('id')->first();
 
-        $primary = $course && $course->teacher_id && $teacherIds->contains((int) $course->teacher_id)
-            ? (int) $course->teacher_id
-            : ($teacherIds->first() ?: null);
+        if (! $course && $reuse && $reuse->status !== 'archived') {
+            $course = $reuse;
+        }
 
         $attrs = [
-            'title' => $subject->name,
-            'code' => $subject->code,
-            'subject_id' => $subject->id,
-            'teacher_id' => $primary,
+            'title' => $subject?->name ?? (string) $row->subject_id,
+            'code' => $subject?->code,
+            'subject_id' => $row->subject_id,
+            'school_class_id' => $row->school_class_id,
+            'teacher_id' => $row->teacher_id ?: null,
         ];
 
         if (! $course) {
             $course = Course::query()->create($attrs + [
-                'school_id' => $subject->school_id,
+                'school_id' => $row->school_id,
                 'created_by' => auth()->id(),
-                'status' => $teacherIds->isNotEmpty() ? 'published' : 'draft',
+                'status' => $row->teacher_id ? 'published' : 'draft',
             ]);
         } else {
-            if ($course->status !== 'archived' && $teacherIds->isNotEmpty()) {
+            if ($course->status !== 'archived' && $row->teacher_id) {
                 $attrs['status'] = 'published';
             }
             $course->forceFill($attrs)->save();
         }
 
-        $keep = $teacherIds->reject(fn ($id) => $id === (int) $course->teacher_id)->values()->all();
-        CourseTeacher::query()->where('course_id', $course->id)->whereNotIn('user_id', $keep ?: [0])->delete();
-        foreach ($keep as $userId) {
-            CourseTeacher::query()->firstOrCreate(
-                ['course_id' => $course->id, 'user_id' => $userId],
-                ['school_id' => $course->school_id]
-            );
-        }
-
-        $this->setAudience($course, $classIds);
+        $this->setAudience($course, [(int) $row->school_class_id]);
 
         return $course->fresh();
     }
@@ -158,6 +197,12 @@ class CourseService
     /** Ensure allocated class-subjects have matching LMS courses (one teacher, or the whole school). */
     public function syncAllocatedCourses(?User $teacher = null): void
     {
+        if ($teacher) {
+            foreach (SchoolClass::query()->where('class_teacher_id', $teacher->id)->get() as $class) {
+                app(\App\Services\Academics\HomeroomService::class)->applyClassTeacher($class);
+            }
+        }
+
         $query = ClassSubject::query()->whereNotNull('teacher_id');
         if ($teacher) {
             $query->where('teacher_id', $teacher->id);
@@ -178,8 +223,19 @@ class CourseService
             return true;
         }
         $departmentIds = Department::query()->where('head_user_id', $user->id)->pluck('id');
+        if ($departmentIds->isNotEmpty() && Subject::query()->whereKey($subjectId)->whereIn('department_id', $departmentIds)->exists()) {
+            return true;
+        }
 
-        return $departmentIds->isNotEmpty() && Subject::query()->whereKey($subjectId)->whereIn('department_id', $departmentIds)->exists();
+        $homeroom = app(\App\Services\Academics\HomeroomService::class);
+        $classIds = SchoolClass::query()->where('class_teacher_id', $user->id)->pluck('id');
+        foreach ($classIds as $classId) {
+            if ($homeroom->classTeacherTeaches($user, (int) $classId, $subjectId)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function validTeacher(mixed $id): ?int

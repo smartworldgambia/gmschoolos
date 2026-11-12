@@ -1,4 +1,4 @@
-import { BookIcon, CourseCover, PlayMini } from '@/Components/Lms/LmsChrome';
+import { CourseCover, PlayMini } from '@/Components/Lms/LmsChrome';
 import StatusBadge from '@/Components/SchoolOS/StatusBadge';
 import { enumLabel } from '@/lib/academic';
 import { courseDisplayTitle } from '@/lib/lms';
@@ -22,23 +22,12 @@ export default function CourseCard({ course, author, t, tone, index = 0, layout 
                     {author ? <StatusBadge status={course.status} label={enumLabel(t, 'lms.status', course.status)} /> : null}
                 </div>
                 <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                    {course.code ? (
-                        <span className="inline-flex items-center gap-1">
-                            <BookIcon className="h-3.5 w-3.5" />
-                            {course.code}
-                        </span>
-                    ) : course.subject ? (
-                        <span>{course.subject}</span>
-                    ) : null}
-                    {author ? (
-                        <span>{t('lms.card.participants', { n: course.enrolled || 0 })}</span>
-                    ) : course.enrolled ? (
-                        <span>{t('lms.card.participants', { n: course.enrolled })}</span>
-                    ) : classes.length ? (
-                        <span>{classes.join(' · ')}</span>
-                    ) : course.teacher ? (
-                        <span>{course.teacher}</span>
-                    ) : null}
+                    {(() => {
+                        const classroom = course.classroom || classes[0];
+                        const line = [course.subject, classroom, course.teacher].filter(Boolean).join(' · ');
+                        return line ? <span>{line}</span> : null;
+                    })()}
+                    {author || course.enrolled ? <span>{t('lms.card.participants', { n: course.enrolled || 0 })}</span> : null}
                 </p>
 
                 {showProgress ? (

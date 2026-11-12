@@ -10,13 +10,18 @@ class Level extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'name', 'code', 'grade_number', 'sort_order'];
+    protected $fillable = ['school_id', 'name', 'code', 'grade_number', 'sort_order', 'teaching_model'];
 
     protected static function booted(): void
     {
         static::saving(function (Level $l) {
             if ($l->grade_number === null) {
                 $l->grade_number = static::guessGradeNumber((string) $l->name, (string) $l->code);
+            }
+            if (! in_array((string) $l->teaching_model, ['homeroom', 'specialist'], true)) {
+                $l->teaching_model = \App\Services\Academics\HomeroomService::defaultModel(
+                    $l->grade_number, (string) $l->name, (string) $l->code
+                );
             }
         });
     }

@@ -14,7 +14,7 @@ class Course extends Model
     public const STATUSES = ['draft', 'published', 'archived'];
 
     protected $fillable = [
-        'school_id', 'subject_id', 'category_id', 'teacher_id', 'created_by', 'title', 'code', 'description', 'objectives', 'status',
+        'school_id', 'subject_id', 'school_class_id', 'category_id', 'teacher_id', 'created_by', 'title', 'code', 'description', 'objectives', 'status',
     ];
 
     protected function casts(): array
@@ -25,6 +25,11 @@ class Course extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function schoolClass(): BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'school_class_id');
     }
 
     public function category(): BelongsTo

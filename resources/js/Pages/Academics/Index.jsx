@@ -13,13 +13,17 @@ function remove(t, url) {
 
 function AddLevel() {
     const { t } = useLocale();
-    const { data, setData, post, processing, errors, reset } = useForm({ name: '', code: '' });
+    const { data, setData, post, processing, errors, reset } = useForm({ name: '', code: '', teaching_model: '' });
 
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                post(route('academics.levels.store'), { preserveScroll: true, onSuccess: () => reset() });
+                post(route('academics.levels.store'), {
+                    preserveScroll: true,
+                    onSuccess: () => reset(),
+                    transform: (d) => (d.teaching_model ? d : { name: d.name, code: d.code }),
+                });
             }}
             className="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4"
         >
@@ -29,6 +33,13 @@ function AddLevel() {
             </Field>
             <Field label={t('acad.common.code')}>
                 <Input value={data.code} onChange={(e) => setData('code', e.target.value)} className="!w-28" />
+            </Field>
+            <Field label={t('academics.level.model')}>
+                <Select value={data.teaching_model} onChange={(e) => setData('teaching_model', e.target.value)} className="!w-auto">
+                    <option value="">{t('acad.common.choose')}</option>
+                    <option value="homeroom">{t('academics.level.homeroomShort')}</option>
+                    <option value="specialist">{t('academics.level.specialistShort')}</option>
+                </Select>
             </Field>
             <button type="submit" className="btn-teal" disabled={processing}>
                 {t('acad.common.add')}
@@ -115,9 +126,9 @@ function ClassRow({ item, teachers, canManage }) {
     );
 }
 
-function AddClass({ levels }) {
+function AddClass({ levels, teachers }) {
     const { t } = useLocale();
-    const { data, setData, post, processing, errors, reset } = useForm({ level_id: '', name: '', stream: '', capacity: '' });
+    const { data, setData, post, processing, errors, reset } = useForm({ level_id: '', name: '', stream: '', capacity: '', class_teacher_id: '' });
 
     return (
         <form
@@ -147,6 +158,16 @@ function AddClass({ levels }) {
             <Field label={t('academics.class.capacity')}>
                 <Input type="number" min="1" value={data.capacity} onChange={(e) => setData('capacity', e.target.value)} className="!w-28" />
             </Field>
+            <Field label={t('academics.class.classTeacher')} error={errors.class_teacher_id}>
+                <Select value={data.class_teacher_id} onChange={(e) => setData('class_teacher_id', e.target.value)}>
+                    <option value="">{t('acad.common.none')}</option>
+                    {teachers.map((x) => (
+                        <option key={x.id} value={x.id}>
+                            {x.name}
+                        </option>
+                    ))}
+                </Select>
+            </Field>
             <button type="submit" className="btn-teal" disabled={processing}>
                 {t('acad.common.add')}
             </button>
@@ -157,7 +178,12 @@ function AddClass({ levels }) {
 function SubjectRow({ item, departments, canManage }) {
     const { t } = useLocale();
     const [editing, setEditing] = useState(false);
-    const { data, setData, put, processing, errors } = useForm({ name: item.name, code: item.code ?? '', department_id: item.department_id ?? '' });
+    const { data, setData, put, processing, errors } = useForm({
+        name: item.name,
+        code: item.code ?? '',
+        department_id: item.department_id ?? '',
+        is_specialist: !!item.is_specialist,
+    });
 
     if (!editing) {
         return (
@@ -166,6 +192,10 @@ function SubjectRow({ item, departments, canManage }) {
                 <td className="px-3 py-2 text-slate-600">{item.code ?? '—'}</td>
                 <td className="px-3 py-2 text-slate-600">{item.department ?? '—'}</td>
                 <td className="px-3 py-2 text-slate-600">{item.classes_count}</td>
+                <td className="px-3 py-2 text-slate-600">{(item.teachers ?? []).join(', ') || '—'}</td>
+                <td className="px-3 py-2 text-slate-600">
+                    {item.is_specialist ? t('academics.subject.specialistShort') : '—'}
+                </td>
                 <td className="px-3 py-2 text-end">
                     {canManage ? (
                         <span className="inline-flex gap-3 whitespace-nowrap">
@@ -184,7 +214,7 @@ function SubjectRow({ item, departments, canManage }) {
 
     return (
         <tr className="border-t border-slate-100 bg-slate-50">
-            <td colSpan={5} className="px-3 py-3">
+            <td colSpan={7} className="px-3 py-3">
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
@@ -208,6 +238,15 @@ function SubjectRow({ item, departments, canManage }) {
                             ))}
                         </Select>
                     </Field>
+                    <label className="inline-flex items-center gap-2 pb-2 text-sm text-slate-700">
+                        <input
+                            type="checkbox"
+                            className="rounded border-gray-300"
+                            checked={!!data.is_specialist}
+                            onChange={(e) => setData('is_specialist', e.target.checked)}
+                        />
+                        {t('academics.subject.specialist')}
+                    </label>
                     <button type="submit" className="btn-teal" disabled={processing}>
                         {t('acad.common.save')}
                     </button>
@@ -222,13 +261,17 @@ function SubjectRow({ item, departments, canManage }) {
 
 function AddSubject({ departments }) {
     const { t } = useLocale();
-    const { data, setData, post, processing, errors, reset } = useForm({ name: '', code: '', department_id: '' });
+    const { data, setData, post, processing, errors, reset } = useForm({ name: '', code: '', department_id: '', is_specialist: false });
 
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                post(route('academics.subjects.store'), { preserveScroll: true, onSuccess: () => reset() });
+                post(route('academics.subjects.store'), {
+                    preserveScroll: true,
+                    onSuccess: () => reset(),
+                    transform: (d) => (d.is_specialist ? d : { name: d.name, code: d.code, department_id: d.department_id }),
+                });
             }}
             className="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4"
         >
@@ -249,6 +292,15 @@ function AddSubject({ departments }) {
                     ))}
                 </Select>
             </Field>
+            <label className="inline-flex items-center gap-2 pb-2 text-sm text-slate-700">
+                <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={!!data.is_specialist}
+                    onChange={(e) => setData('is_specialist', e.target.checked)}
+                />
+                {t('academics.subject.specialist')}
+            </label>
             <button type="submit" className="btn-teal" disabled={processing}>
                 {t('acad.common.add')}
             </button>
@@ -386,6 +438,21 @@ export default function Index({ classes = [], subjects = [], levels = [], depart
                             <span key={l.id} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-navy">
                                 {l.name}
                                 {can.manage ? (
+                                    <select
+                                        value={l.teaching_model === 'specialist' ? 'specialist' : 'homeroom'}
+                                        aria-label={t('academics.level.model')}
+                                        className="max-w-[9rem] rounded-md border-0 bg-transparent py-0 pe-6 text-xs text-slate-600"
+                                        onChange={(e) => router.put(route('academics.levels.update', l.id), { teaching_model: e.target.value }, { preserveScroll: true })}
+                                    >
+                                        <option value="homeroom">{t('academics.level.homeroomShort')}</option>
+                                        <option value="specialist">{t('academics.level.specialistShort')}</option>
+                                    </select>
+                                ) : (
+                                    <span className="text-xs text-slate-500">
+                                        {t(l.teaching_model === 'homeroom' ? 'academics.level.homeroomShort' : 'academics.level.specialistShort')}
+                                    </span>
+                                )}
+                                {can.manage ? (
                                     <button type="button" aria-label={t('acad.common.remove')} className="text-slate-400 hover:text-red-600" onClick={() => remove(t, route('academics.levels.destroy', l.id))}>
                                         ×
                                     </button>
@@ -423,7 +490,7 @@ export default function Index({ classes = [], subjects = [], levels = [], depart
                             </tbody>
                         </table>
                     </div>
-                    {can.manage ? <AddClass levels={levels} /> : null}
+                    {can.manage ? <AddClass levels={levels} teachers={teachers} /> : null}
                 </Card>
 
                 <Card title={t('academics.subjects')}>
@@ -435,13 +502,15 @@ export default function Index({ classes = [], subjects = [], levels = [], depart
                                     <Th>{t('acad.common.code')}</Th>
                                     <Th>{t('academics.subject.department')}</Th>
                                     <Th>{t('academics.subject.classes')}</Th>
+                                    <Th>{t('academics.subject.teachers')}</Th>
+                                    <Th>{t('academics.subject.specialistShort')}</Th>
                                     <th />
                                 </tr>
                             </thead>
                             <tbody>
                                 {subjects.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+                                        <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
                                             {t('academics.noSubjects')}
                                         </td>
                                     </tr>

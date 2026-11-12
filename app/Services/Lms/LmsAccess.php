@@ -59,8 +59,16 @@ class LmsAccess
 
     public function teachesCourse(User $user, Course $course): bool
     {
-        return (int) $course->teacher_id === (int) $user->id
-            || CourseTeacher::query()->where('course_id', $course->id)->where('user_id', $user->id)->exists();
+        if ((int) $course->teacher_id === (int) $user->id
+            || CourseTeacher::query()->where('course_id', $course->id)->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+        if ($course->school_class_id && $course->subject_id) {
+            return app(\App\Services\Academics\HomeroomService::class)
+                ->classTeacherTeaches($user, (int) $course->school_class_id, (int) $course->subject_id);
+        }
+
+        return false;
     }
 
     /** Abort 403 unless the user has one of the roles; returns the role. */
