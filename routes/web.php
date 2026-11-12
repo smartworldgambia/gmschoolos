@@ -385,6 +385,7 @@ Route::middleware(['auth', 'verified', 'identify.tenant', 'school.context'])->gr
     Route::get('/academics', [AcademicController::class, 'index'])->middleware('permission:academics.view')->name('academics.index');
     Route::middleware('permission:academics.manage')->prefix('academics')->group(function () {
         Route::post('/levels', [AcademicController::class, 'storeLevel'])->name('academics.levels.store');
+        Route::put('/levels/{level}', [AcademicController::class, 'updateLevel'])->whereNumber('level')->name('academics.levels.update');
         Route::delete('/levels/{level}', [AcademicController::class, 'destroyLevel'])->whereNumber('level')->name('academics.levels.destroy');
         Route::post('/classes', [AcademicController::class, 'storeClass'])->name('academics.classes.store');
         Route::put('/classes/{class}', [AcademicController::class, 'updateClass'])->whereNumber('class')->name('academics.classes.update');
@@ -398,6 +399,7 @@ Route::middleware(['auth', 'verified', 'identify.tenant', 'school.context'])->gr
 
         Route::put('/classes/{class}/curriculum', [CurriculumController::class, 'save'])->whereNumber('class')->name('academics.curriculum.save');
         Route::post('/classes/{class}/curriculum/copy', [CurriculumController::class, 'copy'])->whereNumber('class')->name('academics.curriculum.copy');
+        Route::post('/classes/{class}/curriculum/homeroom', [CurriculumController::class, 'applyHomeroom'])->whereNumber('class')->name('academics.curriculum.homeroom');
 
         Route::post('/years', [CalendarController::class, 'storeYear'])->name('academics.years.store');
         Route::post('/years/{year}/current', [CalendarController::class, 'setCurrentYear'])->whereNumber('year')->name('academics.years.current');

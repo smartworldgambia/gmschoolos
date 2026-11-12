@@ -364,7 +364,10 @@ class SetupWizard
                 throw ValidationException::withMessages(['code' => 'This subject code is already used.']);
             }
 
-            return Subject::query()->create(['school_id' => $school->id, 'name' => $name, 'code' => $code]);
+            return Subject::query()->create([
+                'school_id' => $school->id, 'name' => $name, 'code' => $code,
+                'is_specialist' => Subject::guessSpecialist($name, (string) $code),
+            ]);
         });
     }
 

@@ -62,6 +62,44 @@ class LmsCoursesTest extends Phase7TestCase
             ->assertInertia(fn ($p) => $p->where('stats.courses', 1));
     }
 
+    public function test_the_same_subject_in_two_classes_becomes_two_lms_courses(): void
+    {
+        $nursery = $this->classNamed('Nursery A');
+        $tenB = $this->classNamed('Grade 10B');
+        $ict = $this->subject('ICT');
+        $this->allocate($this->teacher, $ict, $nursery);
+        $this->allocate($this->teacher, $ict, $this->class);
+
+        $this->actAs($this->admin)->get(route('lms.courses.index'))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p
+                ->has('courses', 2)
+                ->where('courses', fn ($courses) => collect($courses)->pluck('classes')->flatten()->unique()->sort()->values()->all() === ['Grade 10A', 'Nursery A']));
+
+        app(\App\Support\TenantContext::class)->set($this->school);
+        $this->assertSame(2, Course::query()->where('subject_id', $ict->id)->count());
+        $this->assertEqualsCanonicalizing(
+            [$nursery->id, $this->class->id],
+            Course::query()->where('subject_id', $ict->id)->pluck('school_class_id')->all()
+        );
+        $this->assertFalse(Course::query()->where('subject_id', $ict->id)->where('school_class_id', $tenB->id)->exists());
+    }
+
+    public function test_lms_dashboard_payload_includes_subject_teacher_and_classroom(): void
+    {
+        $maths = $this->subject('Mathematics');
+        $this->allocate($this->teacher, $maths);
+
+        $this->actAs($this->admin)->get(route('lms.courses.index'))
+            ->assertOk()
+            ->assertInertia(fn ($p) => $p
+                ->has('courses', 1)
+                ->where('courses.0.subject', 'Mathematics')
+                ->where('courses.0.teacher', $this->teacher->name)
+                ->where('courses.0.classroom', 'Grade 10A')
+                ->where('courses.0.classes', ['Grade 10A']));
+    }
+
     public function test_a_teacher_may_only_create_courses_for_subjects_they_are_allocated_to(): void
     {
         $maths = $this->subject('Mathematics');

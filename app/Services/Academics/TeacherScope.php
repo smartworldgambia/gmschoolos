@@ -65,6 +65,10 @@ class TeacherScope
             return true;
         }
 
+        if (app(HomeroomService::class)->classTeacherTeaches($user, $classId, $subjectId)) {
+            return true;
+        }
+
         return in_array($subjectId, $this->headedSubjectIds($user)->all(), true)
             && ClassSubject::query()->where('school_class_id', $classId)->where('subject_id', $subjectId)->exists();
     }

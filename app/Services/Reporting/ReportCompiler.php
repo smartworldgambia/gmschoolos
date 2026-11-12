@@ -43,7 +43,10 @@ class ReportCompiler
         $average = $totals ? round(array_sum($totals) / count($totals), 2) : null;
         $letter = $average !== null ? $this->results->letterFor($average) : ['letter' => null, 'remark' => null];
         $missing = array_values(array_filter($subjects, fn ($s) => ($s['status'] ?? '') === 'missing'));
-        $position = ($cfg['show_position'] || ($template?->config['show_position'] ?? false))
+        $showPosition = array_key_exists('show_position', (array) ($template?->config ?? []))
+            ? (bool) $template->config['show_position']
+            : (bool) ($cfg['show_position'] ?? false);
+        $position = $showPosition
             ? $this->classPosition($student, $term, $average)
             : null;
 

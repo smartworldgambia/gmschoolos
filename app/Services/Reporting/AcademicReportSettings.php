@@ -108,10 +108,10 @@ class AcademicReportSettings
         ];
 
         return [
-            ['key' => 'nursery', 'name' => 'Nursery report', 'program_band' => 'nursery', 'config' => $base + ['title' => 'Nursery Progress Report', 'show_position' => false]],
-            ['key' => 'primary', 'name' => 'Primary report card', 'program_band' => 'primary', 'config' => $base + ['title' => 'Primary Report Card']],
-            ['key' => 'basic_secondary', 'name' => 'Basic cycle report card', 'program_band' => 'basic_secondary', 'config' => $base + ['title' => 'Basic Cycle Report Card']],
-            ['key' => 'senior_secondary', 'name' => 'Senior secondary report card', 'program_band' => 'senior_secondary', 'config' => $base + ['title' => 'Senior Secondary Report Card']],
+            ['key' => 'nursery', 'name' => 'Nursery report', 'program_band' => 'nursery', 'config' => array_merge($base, ['title' => 'Nursery Progress Report', 'show_position' => false])],
+            ['key' => 'primary', 'name' => 'Primary report card', 'program_band' => 'primary', 'config' => array_merge($base, ['title' => 'Primary Report Card', 'show_position' => true])],
+            ['key' => 'basic_secondary', 'name' => 'Basic cycle report card', 'program_band' => 'basic_secondary', 'config' => array_merge($base, ['title' => 'Basic Cycle Report Card', 'show_position' => true])],
+            ['key' => 'senior_secondary', 'name' => 'Senior secondary report card', 'program_band' => 'senior_secondary', 'config' => array_merge($base, ['title' => 'Senior Secondary Report Card', 'show_position' => true])],
         ];
     }
 }
