@@ -35,13 +35,16 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+// The e-mailed link is the credential. It must not sit behind `auth`, or a Gmail click while
+// another SchoolOS session is open (or none is) returns 403 "This action is unauthorized."
+Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware('throttle:6,1')
+    ->where(['id' => '[0-9]+', 'hash' => '[a-f0-9]{40}'])
+    ->name('verification.verify');
+
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
-
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')

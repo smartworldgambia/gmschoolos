@@ -38,7 +38,7 @@ class EnsureTwoFactorVerified
             return $next($request);
         }
 
-        if ($request->routeIs('two-factor.*', 'logout')) {
+        if ($request->routeIs('two-factor.*', 'logout', 'verification.verify')) {
             return $next($request);
         }
 
