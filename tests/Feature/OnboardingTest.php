@@ -200,6 +200,38 @@ class OnboardingTest extends TestCase
         Notification::assertSentTo($admin, VerifyEmail::class);
     }
 
+    public function test_the_verification_link_from_the_email_signs_the_administrator_in_and_opens_setup(): void
+    {
+        $this->register()->assertRedirect(route('verification.notice'));
+
+        $admin = $this->platform(fn () => User::query()->where('email', 'awa@riverside.test')->firstOrFail());
+        $this->assertNull($admin->email_verified_at);
+
+        $href = null;
+        Notification::assertSentTo($admin, VerifyEmail::class, function (VerifyEmail $notification) use ($admin, &$href) {
+            $href = $notification->toMail($admin)->actionUrl;
+
+            return is_string($href) && str_contains($href, '/verify-email/'.$admin->id.'/');
+        });
+
+        // Gmail is often a different browser (or another SchoolOS tab). The signed URL must still work.
+        auth()->logout();
+        app(TenantContext::class)->clear();
+        $this->flushSession();
+
+        $path = parse_url($href, PHP_URL_PATH).'?'.parse_url($href, PHP_URL_QUERY);
+        $other = User::factory()->create(['email' => 'already-signed-in@example.test', 'email_verified_at' => now()]);
+
+        $this->actingAs($other)->get($path)
+            ->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+
+        $this->assertAuthenticatedAs($admin->fresh());
+        $this->assertNotNull($admin->fresh()->email_verified_at);
+
+        $this->get(route('dashboard'))->assertRedirect(route('setup.index'));
+        $this->get(route('setup.index'))->assertOk();
+    }
+
     public function test_agreement_to_terms_and_every_required_field_is_enforced(): void
     {
         $this->register(['terms' => null])->assertSessionHasErrors('terms');

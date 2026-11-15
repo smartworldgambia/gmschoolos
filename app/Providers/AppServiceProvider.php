@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Services\Integrations\IntegrationSettings;
 use App\Services\Scale\QueryProfiler;
+use App\Support\EmailVerification;
 use App\Support\PlatformMail;
 use App\Support\TenantContext;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Event;
 use App\Models\BillingNotificationLog;
@@ -31,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        VerifyEmail::createUrlUsing(fn ($notifiable) => EmailVerification::signedUrl($notifiable));
 
         Password::defaults(fn () => $this->app->isProduction()
             ? Password::min(12)->mixedCase()->numbers()->symbols()->uncompromised()
