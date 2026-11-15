@@ -62,11 +62,18 @@ Route::middleware('auth')->group(function () {
     Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('two-factor.challenge.store');
+    Route::post('two-factor-challenge/otp', [TwoFactorChallengeController::class, 'send'])
+        ->middleware('throttle:5,1')
+        ->name('two-factor.challenge.send');
 
     Route::get('user/two-factor', [TwoFactorSettingsController::class, 'edit'])
         ->name('two-factor.settings');
     Route::post('user/two-factor', [TwoFactorSettingsController::class, 'start'])
+        ->middleware('throttle:6,1')
         ->name('two-factor.start');
+    Route::post('user/two-factor/otp', [TwoFactorSettingsController::class, 'send'])
+        ->middleware('throttle:5,1')
+        ->name('two-factor.otp.send');
     Route::post('user/two-factor/confirm', [TwoFactorSettingsController::class, 'confirm'])
         ->middleware('throttle:6,1')
         ->name('two-factor.confirm');

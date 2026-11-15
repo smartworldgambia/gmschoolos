@@ -84,8 +84,13 @@ const en = {
 
     'auth.2fa.title': 'Two-factor authentication',
     'auth.2fa.help': 'Enter the 6-digit code from your authenticator app, or a recovery code.',
+    'auth.2fa.helpTotp': 'Enter the 6-digit code from your authenticator app, or a recovery code.',
+    'auth.2fa.helpEmail': 'Enter the 6-digit code we just emailed to {destination}.',
+    'auth.2fa.helpSms': 'Enter the 6-digit code we just texted to {destination}.',
     'auth.2fa.code': 'Authentication code',
     'auth.2fa.submit': 'Verify',
+    'auth.2fa.resend': 'Resend code',
+    'auth.2fa.sent': 'A new code has been sent.',
 
     'onboarding.title': 'Register your school',
     'onboarding.subtitle': 'Set up Gambia SchoolOS in a few guided steps.',
@@ -641,8 +646,14 @@ const fr = {
     'auth.2fa.title': 'Authentification à deux facteurs',
     'auth.2fa.help':
         'Saisissez le code à 6 chiffres de votre application d’authentification, ou un code de récupération.',
+    'auth.2fa.helpTotp':
+        'Saisissez le code à 6 chiffres de votre application d’authentification, ou un code de récupération.',
+    'auth.2fa.helpEmail': 'Saisissez le code à 6 chiffres envoyé à {destination}.',
+    'auth.2fa.helpSms': 'Saisissez le code à 6 chiffres envoyé par SMS au {destination}.',
     'auth.2fa.code': 'Code d’authentification',
     'auth.2fa.submit': 'Vérifier',
+    'auth.2fa.resend': 'Renvoyer le code',
+    'auth.2fa.sent': 'Un nouveau code a été envoyé.',
 
     'onboarding.title': 'Inscrire votre école',
     'onboarding.subtitle': 'Configurez Gambia SchoolOS en quelques étapes guidées.',
@@ -1194,8 +1205,13 @@ const ar = {
 
     'auth.2fa.title': 'المصادقة الثنائية',
     'auth.2fa.help': 'أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة، أو رمز الاسترداد.',
+    'auth.2fa.helpTotp': 'أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة، أو رمز الاسترداد.',
+    'auth.2fa.helpEmail': 'أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى {destination}.',
+    'auth.2fa.helpSms': 'أدخل الرمز المكون من 6 أرقام الذي أرسلناه برسالة إلى {destination}.',
     'auth.2fa.code': 'رمز المصادقة',
     'auth.2fa.submit': 'تحقق',
+    'auth.2fa.resend': 'إعادة إرسال الرمز',
+    'auth.2fa.sent': 'تم إرسال رمز جديد.',
 
     'onboarding.title': 'سجّل مدرستك',
     'onboarding.subtitle': 'أعد إعداد Gambia SchoolOS في خطوات موجّهة قليلة.',

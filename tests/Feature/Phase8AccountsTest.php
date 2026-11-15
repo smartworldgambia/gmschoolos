@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Notifications\StaffInvitationNotification;
 use App\Support\TenantContext;
+use App\Support\Totp;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
@@ -319,6 +320,41 @@ class Phase8AccountsTest extends Phase8TestCase
         $this->actAs($this->admin)->get(route('accounts.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('invitations.0.state', 'accepted'));
+    }
+
+    public function test_a_two_factor_administrator_session_does_not_block_the_invitation_link(): void
+    {
+        Notification::fake();
+        $this->actAs($this->admin)->post(route('accounts.invite.staff'), [
+            'name' => 'Fatou Njie', 'email' => 'fatou-acct@alpha.test', 'role' => 'accountant',
+        ])->assertSessionHasNoErrors();
+
+        $token = $this->lastInviteToken();
+
+        $this->admin->forceFill([
+            'two_factor_secret' => encrypt(Totp::generateSecret()),
+            'two_factor_recovery_codes' => encrypt(json_encode(['AAAA-BBBB'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->actingAs($this->admin)
+            ->withSession(['auth.two_factor_passed' => false])
+            ->get(route('invitations.show', $token))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/AcceptInvitation')
+                ->where('invalid', false)
+                ->where('invitation.role', 'accountant'));
+
+        $this->actingAs($this->admin)
+            ->withSession(['auth.two_factor_passed' => false])
+            ->post(route('invitations.accept', $token), [
+                'password' => self::PASSWORD, 'password_confirmation' => self::PASSWORD,
+            ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->hasRole('accountant'));
+        $this->assertSame('accepted', $this->platform(fn () => StaffInvitation::query()->firstOrFail()->state()));
     }
 
     public function test_pending_invitations_can_be_resent_and_revoked(): void

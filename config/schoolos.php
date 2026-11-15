@@ -519,6 +519,10 @@ return [
         'require_two_factor_privileged' => env('SCHOOLOS_REQUIRE_2FA_PRIVILEGED') === null
             ? env('APP_ENV') === 'production'
             : filter_var(env('SCHOOLOS_REQUIRE_2FA_PRIVILEGED'), FILTER_VALIDATE_BOOLEAN),
+
+        // Email / SMS one-time codes (minutes valid, seconds between resends).
+        'two_factor_otp_expire' => (int) env('SCHOOLOS_2FA_OTP_EXPIRE', 10),
+        'two_factor_otp_resend' => (int) env('SCHOOLOS_2FA_OTP_RESEND', 45),
     ],
 
     /*

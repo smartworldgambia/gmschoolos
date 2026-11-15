@@ -110,7 +110,7 @@ class ProductionHardeningTest extends TestCase
         $user->assignRole('school_admin');
 
         $this->actingAs($user)
-            ->post(route('two-factor.start'))
+            ->post(route('two-factor.start'), ['method' => 'totp'])
             ->assertRedirect(route('two-factor.settings'));
 
         $secret = session('auth.two_factor_setup_secret');
@@ -119,7 +119,10 @@ class ProductionHardeningTest extends TestCase
         $code = Totp::at($secret, (int) floor(time() / 30));
 
         $this->actingAs($user)
-            ->withSession(['auth.two_factor_setup_secret' => $secret])
+            ->withSession([
+                'auth.two_factor_setup_secret' => $secret,
+                'auth.two_factor_setup_method' => 'totp',
+            ])
             ->post(route('two-factor.confirm'), ['code' => $code])
             ->assertRedirect(route('two-factor.settings'));
 
