@@ -54,7 +54,9 @@ export default function AcceptInvitation({ invalid = false, token = '', invitati
                 className="mt-5 space-y-4"
                 onSubmit={(e) => {
                     e.preventDefault();
-                    form.post(route('invitations.accept', token), { onFinish: () => form.reset('password', 'password_confirmation') });
+                    // Relative path: Ziggy's APP_URL can differ from the host Gmail opened
+                    // (apex / www / Cloud), and a cross-host Inertia POST 419s.
+                    form.post(`/invitations/${token}`, { onFinish: () => form.reset('password', 'password_confirmation') });
                 }}
             >
                 <div>

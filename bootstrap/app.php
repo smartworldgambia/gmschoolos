@@ -55,6 +55,13 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         // Official examination index numbers are stored exactly as supplied: never silently trimmed.
         $middleware->trimStrings(except: ['official_index_number']);
+        // Invitation accept is opened from Gmail / in-app browsers that often have no (or a
+        // stale) SchoolOS session. The 64-character URL token is the credential — CSRF would
+        // 419 "Page Expired" and leave the invite pending.
+        $middleware->validateCsrfTokens(except: [
+            'invitations/*',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\EnsureAccountActive::class,
             IdentifyTenant::class,

@@ -22,7 +22,9 @@ use App\Services\Onboarding\SetupWizard;
 use App\Support\TenantContext;
 use Database\Seeders\RolesAndPlansSeeder;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -699,6 +701,41 @@ class OnboardingTest extends TestCase
         $this->post(route('invitations.accept', $token), ['password' => 'Another-Str0ng-Pass!', 'password_confirmation' => 'Another-Str0ng-Pass!'])
             ->assertRedirect(route('invitations.show', $token));
         $this->assertSame(1, $this->platform(fn () => User::query()->where('email', 'musa@riverside.test')->count()));
+    }
+
+    public function test_invitation_acceptance_is_exempt_from_csrf_so_gmail_clicks_do_not_419(): void
+    {
+        $request = Request::create('/invitations/'.str_repeat('a', 64), 'POST');
+        $csrf = $this->app->make(ValidateCsrfToken::class);
+        $inExcept = (new \ReflectionMethod($csrf, 'inExceptArray'))->invoke($csrf, $request);
+
+        $this->assertTrue($inExcept, 'Accepting an invitation must not require a CSRF session from Gmail.');
+    }
+
+    public function test_an_accountant_invitation_is_accepted_even_with_a_stale_csrf_token(): void
+    {
+        [, $admin] = $this->registeredSchool();
+        $this->invite($admin, [
+            'name' => 'Lamin Darboe',
+            'email' => 'lamin@riverside.test',
+            'role' => 'accountant',
+        ])->assertSessionHasNoErrors();
+
+        $token = basename(parse_url($this->lastInviteUrl(), PHP_URL_PATH));
+
+        auth()->logout();
+        app(TenantContext::class)->clear();
+        $this->flushSession();
+
+        $this->post(route('invitations.accept', $token), [
+            'password' => 'Another-Str0ng-Pass!',
+            'password_confirmation' => 'Another-Str0ng-Pass!',
+            '_token' => 'expired-session',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->hasRole('accountant'));
+        $this->assertNotNull($this->platform(fn () => StaffInvitation::query()->firstOrFail()->accepted_at));
     }
 
     public function test_expired_revoked_forged_and_resent_links_behave_correctly(): void

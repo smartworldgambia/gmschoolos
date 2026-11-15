@@ -24,7 +24,7 @@ class EnsureTwoFactorVerified
             && config('schoolos.security.require_two_factor_privileged')
             && $user->requiresTwoFactor()
             && ! DemoLoginCatalog::isDemoEmail((string) $user->email)
-            && ! $request->routeIs('two-factor.*', 'logout', 'verification.*', 'password.*')
+            && ! $request->routeIs('two-factor.*', 'logout', 'verification.*', 'password.*', 'invitations.*')
         ) {
             return redirect()->route('two-factor.settings')
                 ->with('warning', 'Two-factor authentication is required for your role. Set it up to continue.');
@@ -38,7 +38,7 @@ class EnsureTwoFactorVerified
             return $next($request);
         }
 
-        if ($request->routeIs('two-factor.*', 'logout', 'verification.verify')) {
+        if ($request->routeIs('two-factor.*', 'logout', 'verification.verify', 'invitations.*')) {
             return $next($request);
         }
 
