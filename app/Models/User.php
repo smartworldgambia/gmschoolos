@@ -120,9 +120,29 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasAnyRole(config('rbac.two_factor_roles', []));
     }
 
+    /** totp (authenticator app), email, or sms. Legacy rows with a secret and no method are totp. */
+    public function twoFactorMethod(): string
+    {
+        $method = (string) ($this->two_factor_method ?: '');
+
+        if (in_array($method, ['totp', 'email', 'sms'], true)) {
+            return $method;
+        }
+
+        return filled($this->two_factor_secret) ? 'totp' : 'email';
+    }
+
     public function hasTwoFactorEnabled(): bool
     {
-        return filled($this->two_factor_secret) && $this->two_factor_confirmed_at !== null;
+        if ($this->two_factor_confirmed_at === null) {
+            return false;
+        }
+
+        return match ($this->twoFactorMethod()) {
+            'totp' => filled($this->two_factor_secret),
+            'email', 'sms' => true,
+            default => false,
+        };
     }
 
     public function recoveryCodes(): array
