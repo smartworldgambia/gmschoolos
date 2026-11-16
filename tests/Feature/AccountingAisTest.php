@@ -179,6 +179,64 @@ class AccountingAisTest extends TestCase
         $this->assertSame(array_sum(array_column($rows, 'debit')), array_sum(array_column($rows, 'credit')));
     }
 
+    public function test_backfill_posts_seed_style_fee_rows_into_ais(): void
+    {
+        app(ChartOfAccounts::class)->ensureFor($this->school);
+        $student = Student::query()->create([
+            'school_id' => $this->school->id,
+            'student_number' => 'STU-AIS-BF',
+            'first_name' => 'Lamin',
+            'last_name' => 'Ceesay',
+            'gender' => 'male',
+            'date_of_birth' => '2011-05-01',
+            'status' => 'active',
+        ]);
+
+        // Mimic DemoRichDataSeeder: insert invoice + confirmed payment without PaymentService.
+        $invoice = Invoice::query()->create([
+            'school_id' => $this->school->id,
+            'student_id' => $student->id,
+            'invoice_number' => 'INV-SEED-1',
+            'status' => 'paid',
+            'subtotal' => 5250,
+            'adjustments_total' => 0,
+            'total_amount' => 5250,
+            'amount_paid' => 5250,
+            'issued_at' => now()->subDays(10),
+            'due_on' => now()->addDays(20)->toDateString(),
+        ]);
+        $payment = Payment::query()->create([
+            'school_id' => $this->school->id,
+            'invoice_id' => $invoice->id,
+            'student_id' => $student->id,
+            'amount' => 5250,
+            'method' => 'wave',
+            'status' => 'confirmed',
+            'paid_at' => now()->subDays(3),
+            'receipt_number' => 'RCPT-SEED-1',
+            'recorded_by' => $this->admin->id,
+        ]);
+
+        $this->assertSame(0, GlJournal::query()->where('source', 'fee_invoice')->count());
+        $this->assertSame(0, GlJournal::query()->where('source', 'fee_payment')->count());
+
+        $ais = app(AccountingService::class);
+        $first = $ais->backfillFeeLedgers($this->admin);
+        $this->assertFalse($first['skipped']);
+        $this->assertSame(1, $first['invoices']);
+        $this->assertSame(1, $first['payments']);
+        $this->assertSame(1, GlJournal::query()->where('source', 'fee_invoice')->where('source_ref_id', $invoice->id)->count());
+        $this->assertSame(1, GlJournal::query()->where('source', 'fee_payment')->where('source_ref_id', $payment->id)->count());
+
+        $second = $ais->backfillFeeLedgers($this->admin);
+        $this->assertSame(0, $second['invoices']);
+        $this->assertSame(0, $second['payments']);
+
+        $stats = $ais->overview(now()->subMonth()->toDateString(), now()->toDateString());
+        $this->assertSame(5250, $stats['income']);
+        $this->assertGreaterThan(0, $stats['cash_bank']);
+    }
+
     public function test_accountant_nav_has_ais_and_fees_not_domain(): void
     {
         $response = $this->actingAs($this->user('accountant'))->get(route('admin.dashboard'))->assertOk();

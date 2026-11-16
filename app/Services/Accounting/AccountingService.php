@@ -41,6 +41,74 @@ class AccountingService
         return ! $this->coa->feesReady();
     }
 
+    /**
+     * Post any fee invoices / confirmed payments that never went through InvoiceService / PaymentService
+     * (e.g. seeders that insert rows directly). Idempotent via JournalPoster source-document keys.
+     *
+     * @return array{invoices:int,payments:int,skipped:bool}
+     */
+    public function backfillFeeLedgers(?User $actor = null): array
+    {
+        $this->ensureReady();
+        if (! $this->coa->feesReady()) {
+            return ['invoices' => 0, 'payments' => 0, 'skipped' => true];
+        }
+
+        $invoicePosted = 0;
+        $paymentPosted = 0;
+
+        Invoice::query()
+            ->whereIn('status', ['issued', 'partial', 'paid', 'overdue'])
+            ->where('total_amount', '>', 0)
+            ->whereNotNull('issued_at')
+            ->orderBy('id')
+            ->each(function (Invoice $invoice) use ($actor, &$invoicePosted) {
+                $existing = GlJournal::query()
+                    ->where('source', 'fee_invoice')
+                    ->where('source_ref_type', $invoice->getMorphClass())
+                    ->where('source_ref_id', $invoice->id)
+                    ->whereIn('status', ['posted', 'reversed'])
+                    ->first();
+                if ($existing) {
+                    $desired = ($invoice->issued_at ?? now())->toDateString();
+                    if ($existing->status === 'posted' && $existing->date?->toDateString() !== $desired) {
+                        $existing->forceFill(['date' => $desired])->save();
+                    }
+
+                    return;
+                }
+                if ($this->postFeeInvoice($invoice, $actor)) {
+                    $invoicePosted++;
+                }
+            });
+
+        Payment::query()
+            ->where('status', 'confirmed')
+            ->where('amount', '>', 0)
+            ->orderBy('id')
+            ->each(function (Payment $payment) use ($actor, &$paymentPosted) {
+                $existing = GlJournal::query()
+                    ->where('source', 'fee_payment')
+                    ->where('source_ref_type', $payment->getMorphClass())
+                    ->where('source_ref_id', $payment->id)
+                    ->whereIn('status', ['posted', 'reversed'])
+                    ->first();
+                if ($existing) {
+                    $desired = ($payment->paid_at ?? now())->toDateString();
+                    if ($existing->status === 'posted' && $existing->date?->toDateString() !== $desired) {
+                        $existing->forceFill(['date' => $desired])->save();
+                    }
+
+                    return;
+                }
+                if ($this->postFeePayment($payment, $actor)) {
+                    $paymentPosted++;
+                }
+            });
+
+        return ['invoices' => $invoicePosted, 'payments' => $paymentPosted, 'skipped' => false];
+    }
+
     // ------------------------------------------------------------------ auto-post from school MIS
 
     public function postFeeInvoice(Invoice $invoice, ?User $actor = null): ?GlJournal

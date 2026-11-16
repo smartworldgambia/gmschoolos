@@ -230,6 +230,7 @@ class DemoRichDataSeeder extends Seeder
         $this->seedAttendanceAndGrades($school, $students, $subjects, $term, $teacher, $year);
         $this->seedAdmissions($school, $classes, $admissions);
         $this->seedFinance($school, $students, $year, $term, $classes, $finance, $head, $admin);
+        $this->syncFeeLedgersToAis($school, $finance);
         $this->seedLms($school, $subjects, $classes, $students, $users, $teacher);
         $this->seedLibrary($school, $students, $librarian, $staff['teacher']);
         $this->seedInventoryAndProcurement($school, $users, $staff, $store, $head, $finance);
@@ -1080,6 +1081,12 @@ class DemoRichDataSeeder extends Seeder
             $status = $paid >= $total ? 'paid' : ($paid > 0 ? 'partial' : 'overdue');
             $number = 'INV-2026-'.str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT);
 
+            // Keep issue/paid dates inside the current month so the default AIS period shows fee activity.
+            $issueDay = max(1, min((int) now()->day - 1, 2 + ($i % 10)));
+            $paidDay = max($issueDay, min((int) now()->day, $issueDay + 1 + ($i % 4)));
+            $issuedAt = now()->copy()->startOfMonth()->addDays($issueDay - 1)->setTime(9, 0);
+            $paidAt = now()->copy()->startOfMonth()->addDays($paidDay - 1)->setTime(11, 30);
+
             $invoice = Invoice::query()->updateOrCreate(
                 ['school_id' => $school->id, 'invoice_number' => $number],
                 [
@@ -1093,7 +1100,7 @@ class DemoRichDataSeeder extends Seeder
                     'total_amount' => $total,
                     'amount_paid' => $paid,
                     'due_on' => now()->addDays(14)->toDateString(),
-                    'issued_at' => now()->subDays(20),
+                    'issued_at' => $issuedAt,
                     'created_by' => $finance->id,
                 ]
             );
@@ -1130,7 +1137,7 @@ class DemoRichDataSeeder extends Seeder
                         'amount' => $paid,
                         'method' => $i % 3 === 0 ? 'wave' : ($i % 3 === 1 ? 'cash' : 'bank_transfer'),
                         'status' => 'confirmed',
-                        'paid_at' => now()->subDays(4 + ($i % 6)),
+                        'paid_at' => $paidAt,
                         'recorded_by' => $finance->id,
                         'receipt_sent' => true,
                         'payer_name' => $student->full_name.' guardian',
@@ -1169,7 +1176,7 @@ class DemoRichDataSeeder extends Seeder
             }
 
             StudentFee::query()->updateOrCreate(
-                ['student_id' => $student->id, 'source' => 'demo-trip:sports-day'],
+                ['student_id' => $student->id, 'source' => 'trip:sports-day'],
                 [
                     'school_id' => $school->id,
                     'fee_category_id' => $cats['PTA']->id,
@@ -1181,6 +1188,27 @@ class DemoRichDataSeeder extends Seeder
                     'created_by' => $finance->id,
                 ]
             );
+        }
+    }
+
+    /** Push seeded fee invoices/payments into AIS (seeders bypass PaymentService / InvoiceService hooks). */
+    private function syncFeeLedgersToAis(School $school, User $finance): void
+    {
+        try {
+            $result = app(\App\Services\Accounting\AccountingService::class)->backfillFeeLedgers($finance);
+            if ($result['skipped']) {
+                $this->command?->warn('AIS fee backfill skipped for '.$school->slug.' (account maps incomplete).');
+
+                return;
+            }
+            $this->command?->info(sprintf(
+                'AIS fee backfill for %s: %d invoices, %d payments.',
+                $school->slug,
+                $result['invoices'],
+                $result['payments']
+            ));
+        } catch (\Throwable $e) {
+            $this->command?->warn('AIS fee backfill failed for '.$school->slug.': '.$e->getMessage());
         }
     }
 
