@@ -193,7 +193,7 @@ class DemoRichDataSeeder extends Seeder
                 'branch' => 'Kairaba Avenue',
                 'swift_code' => 'TBLGGMGM',
                 'currency' => 'GMD',
-                'instructions' => 'Use this account only for the school’s annual platform subscription. Quote the school slug as the payment reference. This is demo seed data — not a live production account.',
+                'instructions' => 'Pay the annual SchoolOS subscription into this account. Use your school slug as the payment reference and email finance@gambiaschoolos.com with the transfer slip.',
                 'is_active' => true,
                 'created_by' => $platform?->id,
             ]
@@ -355,7 +355,7 @@ class DemoRichDataSeeder extends Seeder
                     'basic_salary' => $row['salary'],
                     'status' => 'active',
                     'created_by' => $users['hr_officer']->id,
-                    'notes' => 'Demo contract',
+                    'notes' => 'Permanent employment contract',
                 ]
             );
 
@@ -473,7 +473,7 @@ class DemoRichDataSeeder extends Seeder
                 'paid_by' => $status === 'paid' ? $users['accountant']->id : null,
                 'paid_at' => $status === 'paid' ? now()->subDays(8) : null,
                 'payment_reference' => $status === 'paid' ? 'PAY-'.$label : null,
-                'notes' => 'Demo payroll '.$label,
+                'notes' => 'Monthly payroll '.$label,
             ]
         );
 
@@ -592,8 +592,11 @@ class DemoRichDataSeeder extends Seeder
             ['code' => 'JSS', 'name' => 'Junior Secondary', 'sort_order' => 4, 'grade_number' => null],
             ['code' => 'SSS', 'name' => 'Senior Secondary', 'sort_order' => 5, 'grade_number' => 10],
             ['code' => 'G1', 'name' => 'Grade 1', 'sort_order' => 11, 'grade_number' => 1],
+            ['code' => 'G4', 'name' => 'Grade 4', 'sort_order' => 14, 'grade_number' => 4],
             ['code' => 'G6', 'name' => 'Grade 6', 'sort_order' => 16, 'grade_number' => 6],
+            ['code' => 'G7', 'name' => 'Grade 7', 'sort_order' => 17, 'grade_number' => 7],
             ['code' => 'G9', 'name' => 'Grade 9', 'sort_order' => 19, 'grade_number' => 9],
+            ['code' => 'G11', 'name' => 'Grade 11', 'sort_order' => 21, 'grade_number' => 11],
             ['code' => 'G12', 'name' => 'Grade 12', 'sort_order' => 22, 'grade_number' => 12],
         ];
 
@@ -618,10 +621,13 @@ class DemoRichDataSeeder extends Seeder
         $rows = [
             ['name' => 'Nursery A', 'level' => 'NUR', 'stream' => 'A', 'teacher' => 'teacher_c', 'capacity' => 25],
             ['name' => 'Grade 1A', 'level' => 'G1', 'stream' => 'A', 'teacher' => 'teacher_c', 'capacity' => 35],
+            ['name' => 'Grade 4A', 'level' => 'G4', 'stream' => 'A', 'teacher' => 'teacher_c', 'capacity' => 35],
             ['name' => 'Grade 6A', 'level' => 'G6', 'stream' => 'A', 'teacher' => 'teacher_b', 'capacity' => 40],
+            ['name' => 'Grade 7A', 'level' => 'G7', 'stream' => 'A', 'teacher' => 'teacher_b', 'capacity' => 40],
             ['name' => 'Grade 9A', 'level' => 'G9', 'stream' => 'A', 'teacher' => 'teacher_b', 'capacity' => 40],
             ['name' => 'Grade 10A', 'level' => 'SSS', 'stream' => 'A', 'teacher' => 'teacher', 'capacity' => 40],
             ['name' => 'Grade 10B', 'level' => 'SSS', 'stream' => 'B', 'teacher' => 'teacher', 'capacity' => 40],
+            ['name' => 'Grade 11A', 'level' => 'G11', 'stream' => 'A', 'teacher' => 'teacher', 'capacity' => 40],
             ['name' => 'Grade 12A', 'level' => 'G12', 'stream' => 'A', 'teacher' => 'head_of_department', 'capacity' => 40],
         ];
 
@@ -681,10 +687,13 @@ class DemoRichDataSeeder extends Seeder
         $map = [
             'Nursery A' => [['ENG', 'teacher_c', 5], ['PE', 'teacher_c', 3]],
             'Grade 1A' => [['ENG', 'teacher_c', 6], ['MATH', 'teacher', 6], ['SST', 'teacher_b', 4]],
+            'Grade 4A' => [['ENG', 'teacher_c', 6], ['MATH', 'teacher', 6], ['SST', 'teacher_b', 4], ['PE', 'teacher_c', 2]],
             'Grade 6A' => [['ENG', 'teacher_b', 5], ['MATH', 'teacher', 5], ['SST', 'teacher_b', 4], ['ICT', 'head_of_department', 2]],
+            'Grade 7A' => [['ENG', 'teacher_b', 5], ['MATH', 'teacher', 5], ['SST', 'teacher_b', 4], ['FRE', 'teacher_b', 3], ['ICT', 'head_of_department', 2]],
             'Grade 9A' => [['ENG', 'teacher_b', 5], ['MATH', 'teacher', 5], ['BIO', 'teacher_c', 4], ['SST', 'teacher_b', 4], ['FRE', 'teacher_b', 3]],
             'Grade 10A' => [['MATH', 'teacher', 5], ['ENG', 'teacher_b', 5], ['BIO', 'teacher_c', 4], ['SST', 'academic_coordinator', 3]],
             'Grade 10B' => [['MATH', 'teacher', 5], ['ENG', 'teacher_b', 5], ['BIO', 'teacher_c', 4], ['SST', 'academic_coordinator', 3]],
+            'Grade 11A' => [['MATH', 'teacher', 5], ['ENG', 'teacher_b', 5], ['BIO', 'teacher_c', 4], ['PHY', 'head_of_department', 4], ['CHE', 'teacher_c', 3]],
             'Grade 12A' => [['MATH', 'teacher', 6], ['ENG', 'teacher_b', 5], ['PHY', 'head_of_department', 4], ['CHE', 'teacher_c', 4], ['BIO', 'teacher_c', 4]],
         ];
 
@@ -796,16 +805,19 @@ class DemoRichDataSeeder extends Seeder
         $rosters = [
             'Nursery A' => [['Mariama', 'Jobe', 'female'], ['Omar', 'Faal', 'male'], ['Awa', 'Gassama', 'female'], ['Lamin', 'Mendy', 'male']],
             'Grade 1A' => [['Fatou', 'Njie', 'female'], ['Ebrima', 'Ceesay', 'male'], ['Isatou', 'Bojang', 'female'], ['Modou', 'Sowe', 'male'], ['Haddy', 'Touray', 'female'], ['Alieu', 'Jallow', 'male']],
+            'Grade 4A' => [['Sainey', 'Jallow', 'male'], ['Nyima', 'Camara', 'female'], ['Baboucarr', 'Sowe', 'male'], ['Kumba', 'Touray', 'female'], ['Alhagie', 'Njie', 'male']],
             'Grade 6A' => [['Binta', 'Camara', 'female'], ['Yusupha', 'Sanyang', 'male'], ['Kaddy', 'Manneh', 'female'], ['Pa', 'Sillah', 'male'], ['Ndey', 'Colley', 'female'], ['Abdoulie', 'Bah', 'male']],
+            'Grade 7A' => [['Isatou', 'Ceesay', 'female'], ['Momodou', 'Bah', 'male'], ['Fatou', 'Sanyang', 'female'], ['Lamin', 'Touray', 'male'], ['Awa', 'Jallow', 'female'], ['Ousman', 'Njie', 'male']],
             'Grade 9A' => [['Amie', 'Jallow', 'female'], ['Ousman', 'Darboe', 'male'], ['Satang', 'Ceesay', 'female'], ['Kebba', 'Touray', 'male'], ['Ya', 'Sowe', 'female'], ['Musa', 'Kinteh', 'male'], ['Jainaba', 'Njie', 'female'], ['Yankuba', 'Bojang', 'male']],
             'Grade 10A' => [['Amadou', 'Jallow', 'male'], ['Omar', 'Sanyang', 'male'], ['Lamin', 'Bah', 'male'], ['Ebrima', 'Sowe', 'male'], ['Adama', 'Jatta', 'male'], ['Fanta', 'Sanneh', 'female']],
             'Grade 10B' => [['Fatoumata', 'Ceesay', 'female'], ['Awa', 'Touray', 'female'], ['Mariama', 'Jammeh', 'female'], ['Isatou', 'Njie', 'female'], ['Penda', 'Jallow', 'female'], ['Sainabou', 'Ceesay', 'female']],
+            'Grade 11A' => [['Binta', 'Sanyang', 'female'], ['Ebrima', 'Jallow', 'male'], ['Mariama', 'Ceesay', 'female'], ['Modou', 'Touray', 'male'], ['Haddy', 'Bah', 'female']],
             'Grade 12A' => [['Mustapha', 'Jallow', 'male'], ['Hawa', 'Sanyang', 'female'], ['Bakary', 'Ceesay', 'male'], ['Fatou', 'Camara', 'female'], ['Momodou', 'Touray', 'male'], ['Aisha', 'Njie', 'female'], ['Sait', 'Manneh', 'male'], ['Ramou', 'Bah', 'female']],
         ];
 
         $ageByClass = [
-            'Nursery A' => 5, 'Grade 1A' => 7, 'Grade 6A' => 12, 'Grade 9A' => 15,
-            'Grade 10A' => 16, 'Grade 10B' => 16, 'Grade 12A' => 18,
+            'Nursery A' => 5, 'Grade 1A' => 7, 'Grade 4A' => 10, 'Grade 6A' => 12, 'Grade 7A' => 13,
+            'Grade 9A' => 15, 'Grade 10A' => 16, 'Grade 10B' => 16, 'Grade 11A' => 17, 'Grade 12A' => 18,
         ];
 
         $all = [];
@@ -974,14 +986,17 @@ class DemoRichDataSeeder extends Seeder
     private function seedAdmissions(School $school, array $classes, User $officer): void
     {
         $rows = [
-            ['ADM-DEMO-0001', 'submitted', 'Kebba', 'Camara', 'male', $classes['Grade 10A']->id],
-            ['ADM-DEMO-0002', 'accepted', 'Fanta', 'Jallow', 'female', $classes['Grade 1A']->id],
-            ['ADM-DEMO-0003', 'waitlisted', 'Pa', 'Sowe', 'male', $classes['Grade 6A']->id],
-            ['ADM-DEMO-0004', 'rejected', 'Nyima', 'Touray', 'female', $classes['Grade 9A']->id],
-            ['ADM-DEMO-0005', 'submitted', 'Alhagie', 'Bah', 'male', $classes['Nursery A']->id],
+            ['ADM-BFS-2026-0001', 'submitted', 'Kebba', 'Camara', 'male', $classes['Grade 10A']->id, 'Satang Camara'],
+            ['ADM-BFS-2026-0002', 'accepted', 'Fanta', 'Jallow', 'female', $classes['Grade 1A']->id, 'Mariama Jallow'],
+            ['ADM-BFS-2026-0003', 'waitlisted', 'Pa', 'Sowe', 'male', $classes['Grade 6A']->id, 'Awa Sowe'],
+            ['ADM-BFS-2026-0004', 'rejected', 'Nyima', 'Touray', 'female', $classes['Grade 9A']->id, 'Ousman Touray'],
+            ['ADM-BFS-2026-0005', 'submitted', 'Alhagie', 'Bah', 'male', $classes['Nursery A']->id, 'Fatou Bah'],
+            ['ADM-BFS-2026-0006', 'submitted', 'Isatou', 'Ceesay', 'female', $classes['Grade 7A']->id, 'Ebrima Ceesay'],
+            ['ADM-BFS-2026-0007', 'accepted', 'Modou', 'Njie', 'male', $classes['Grade 4A']->id, 'Haddy Njie'],
+            ['ADM-BFS-2026-0008', 'waitlisted', 'Binta', 'Sanyang', 'female', $classes['Grade 11A']->id, 'Lamin Sanyang'],
         ];
 
-        foreach ($rows as $i => [$number, $status, $first, $last, $gender, $classId]) {
+        foreach ($rows as $i => [$number, $status, $first, $last, $gender, $classId, $guardian]) {
             AdmissionApplication::query()->updateOrCreate(
                 ['school_id' => $school->id, 'application_number' => $number],
                 [
@@ -991,8 +1006,8 @@ class DemoRichDataSeeder extends Seeder
                     'gender' => $gender,
                     'date_of_birth' => now()->subYears(10 + $i)->toDateString(),
                     'preferred_class_id' => $classId,
-                    'guardian_name' => 'Guardian '.$last,
-                    'guardian_relationship' => 'Mother',
+                    'guardian_name' => $guardian,
+                    'guardian_relationship' => $i % 2 === 0 ? 'Mother' : 'Father',
                     'guardian_phone' => '+220 7001'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                     'nationality' => 'Gambian',
                     'source' => $i % 2 === 0 ? 'online' : 'walk_in',
@@ -1507,7 +1522,7 @@ class DemoRichDataSeeder extends Seeder
                 'inventory_category_id' => $cats['ICT']->id,
                 'inventory_location_id' => $storeRoom->id,
                 'supplier_id' => $suppliers['Kanifing Science Supplies']->id,
-                'serial_number' => 'PRJ-DEMO-001',
+                'serial_number' => 'SN-PRJ-88421',
                 'acquired_on' => '2025-03-01',
                 'cost' => 18500,
                 'condition' => 'good',
@@ -1524,7 +1539,7 @@ class DemoRichDataSeeder extends Seeder
             [
                 'name' => 'Admin laptop',
                 'inventory_category_id' => $cats['ICT']->id,
-                'serial_number' => 'LAP-DEMO-002',
+                'serial_number' => 'SN-LAP-55209',
                 'acquired_on' => '2024-11-12',
                 'cost' => 42000,
                 'condition' => 'good',
@@ -1536,7 +1551,7 @@ class DemoRichDataSeeder extends Seeder
             [
                 'name' => 'Office printer',
                 'inventory_category_id' => $cats['ICT']->id,
-                'serial_number' => 'PRT-DEMO-003',
+                'serial_number' => 'SN-PRT-33017',
                 'cost' => 15000,
                 'condition' => 'fair',
                 'status' => 'under_maintenance',
@@ -2003,10 +2018,10 @@ class DemoRichDataSeeder extends Seeder
                 'to_phone' => '+2207000118',
                 'template_key' => 'attendance_alert',
                 'category' => 'attendance',
-                'body' => 'Amadou Jallow was marked absent today. This is a logged demo SMS — not sent by a live provider.',
+                'body' => 'Amadou Jallow was marked absent today at Bright Future School. Please contact the school office if this is unexpected.',
                 'segments' => 1,
                 'status' => 'logged',
-                'provider' => 'demo',
+                'provider' => 'log',
             ]
         );
     }
@@ -2053,11 +2068,14 @@ class DemoRichDataSeeder extends Seeder
 
         foreach (array_slice($g9, 0, 6) as $i => $student) {
             $candidate = ExternalCandidate::query()->updateOrCreate(
-                ['session_id' => $gabece->id, 'student_id' => $student->id],
                 [
                     'school_id' => $school->id,
                     'internal_reference' => sprintf('IC-GABECE-2026-%05d', 90001 + $i),
-                    'official_index_number' => $i < 3 ? 'DEMO/GABECE/2026/'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT) : null,
+                ],
+                [
+                    'session_id' => $gabece->id,
+                    'student_id' => $student->id,
+                    'official_index_number' => $i < 3 ? 'GM/GABECE/2026/'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT) : null,
                     'index_recorded_at' => $i < 3 ? now()->subDays(5) : null,
                     'index_recorded_by' => $i < 3 ? $examOfficer->id : null,
                     'status' => 'registered',
@@ -2108,11 +2126,14 @@ class DemoRichDataSeeder extends Seeder
 
         foreach (array_slice($g12, 0, 6) as $i => $student) {
             $candidate = ExternalCandidate::query()->updateOrCreate(
-                ['session_id' => $wassce->id, 'student_id' => $student->id],
                 [
                     'school_id' => $school->id,
                     'internal_reference' => sprintf('IC-WASSCE-2026-%05d', 90001 + $i),
-                    'official_index_number' => $i === 0 ? 'DEMO/WASSCE/2026/001' : null,
+                ],
+                [
+                    'session_id' => $wassce->id,
+                    'student_id' => $student->id,
+                    'official_index_number' => $i === 0 ? 'GM/WASSCE/2026/001' : null,
                     'index_recorded_at' => $i === 0 ? now()->subDays(3) : null,
                     'index_recorded_by' => $i === 0 ? $examOfficer->id : null,
                     'status' => 'registered',
@@ -2277,10 +2298,10 @@ class DemoRichDataSeeder extends Seeder
         if (isset($students[0])) {
             $template = RecordsTemplate::query()->where('school_id', $school->id)->where('type', 'testimonial')->first();
             $doc = RecordsDocument::query()->updateOrCreate(
-                ['school_id' => $school->id, 'reference' => 'TES-DEMO-0001'],
+                ['school_id' => $school->id, 'reference' => 'TES-BFS-2026-0001'],
                 [
                     'type' => 'testimonial',
-                    'verification_token' => 'demo-verify-'.substr(sha1($school->id.'-tes-1'), 0, 16),
+                    'verification_token' => 'bfs-verify-'.substr(sha1($school->id.'-tes-1'), 0, 16),
                     'student_id' => $students[0]->id,
                     'template_id' => $template?->id,
                     'status' => 'issued',
@@ -2301,10 +2322,10 @@ class DemoRichDataSeeder extends Seeder
             );
 
             RecordsDocument::query()->updateOrCreate(
-                ['school_id' => $school->id, 'reference' => 'TES-DEMO-0002'],
+                ['school_id' => $school->id, 'reference' => 'TES-BFS-2026-0002'],
                 [
                     'type' => 'cover_letter',
-                    'verification_token' => 'demo-verify-'.substr(sha1($school->id.'-cvl-2'), 0, 16),
+                    'verification_token' => 'bfs-verify-'.substr(sha1($school->id.'-cvl-2'), 0, 16),
                     'student_id' => $students[0]->id,
                     'status' => 'draft',
                     'title' => 'Cover letter - '.$students[0]->full_name,
@@ -2319,13 +2340,13 @@ class DemoRichDataSeeder extends Seeder
     private function seedSafeguarding(School $school, array $students, User $head, User $teacher): void
     {
         $open = SafeguardingCase::query()->updateOrCreate(
-            ['school_id' => $school->id, 'reference' => 'SG-DEMO-0001'],
+            ['school_id' => $school->id, 'reference' => 'SG-BFS-2026-0001'],
             [
                 'category' => 'welfare',
                 'severity' => 'low',
                 'status' => 'open',
                 'student_id' => $students[0]->id ?? null,
-                'summary' => 'Demo welfare check-in seed record.',
+                'summary' => 'Routine welfare check-in after extended absence. Family contacted; follow-up booked.',
                 'reported_by' => $head->id,
                 'assigned_to' => $head->id,
                 'occurred_on' => now()->subDays(6)->toDateString(),
@@ -2337,7 +2358,7 @@ class DemoRichDataSeeder extends Seeder
         );
 
         SafeguardingCase::query()->updateOrCreate(
-            ['school_id' => $school->id, 'reference' => 'SG-DEMO-0002'],
+            ['school_id' => $school->id, 'reference' => 'SG-BFS-2026-0002'],
             [
                 'category' => 'bullying',
                 'severity' => 'medium',

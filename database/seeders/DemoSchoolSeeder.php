@@ -379,7 +379,7 @@ class DemoSchoolSeeder extends Seeder
         }
 
         AdmissionApplication::query()->updateOrCreate(
-            ['school_id' => $school->id, 'application_number' => 'ADM-DEMO-0001'],
+            ['school_id' => $school->id, 'application_number' => 'ADM-BFS-2026-0001'],
             [
                 'status' => 'submitted',
                 'first_name' => 'Kebba',
@@ -718,7 +718,7 @@ class DemoSchoolSeeder extends Seeder
             'school_id' => $school->id,
             'user_id' => $admin->id,
             'event' => 'seed',
-            'description' => 'Demo school data refreshed',
+            'description' => 'School records refreshed for the new term',
             'properties' => ['students' => count($students)],
         ]);
 
@@ -755,10 +755,10 @@ class DemoSchoolSeeder extends Seeder
         }
 
         $book = LibraryBook::query()->updateOrCreate(
-            ['school_id' => $school->id, 'isbn' => '978-0-demo-001'],
+            ['school_id' => $school->id, 'isbn' => '978-9983-961-12-7'],
             [
                 'title' => 'Mathematics for Senior Secondary',
-                'author' => 'WAEC Prep',
+                'author' => 'WAEC Study Series',
                 'category' => 'Mathematics',
                 'copies_total' => 5,
                 'copies_available' => 4,
@@ -834,31 +834,31 @@ class DemoSchoolSeeder extends Seeder
         }
 
         SafeguardingCase::query()->updateOrCreate(
-            ['school_id' => $school->id, 'reference' => 'SG-DEMO-0001'],
+            ['school_id' => $school->id, 'reference' => 'SG-BFS-2026-0001'],
             [
                 'category' => 'welfare',
                 'severity' => 'low',
                 'status' => 'open',
                 'student_id' => $students[0]->id ?? null,
-                'summary' => 'Demo welfare check-in seed record.',
+                'summary' => 'Routine welfare check-in after extended absence. Family contacted; follow-up booked.',
                 'reported_by' => $admin->id,
             ]
         );
 
         LtiTool::query()->updateOrCreate(
-            ['school_id' => $school->id, 'name' => 'Demo LTI Tool'],
+            ['school_id' => $school->id, 'name' => 'WAEC Past Papers Connect'],
             [
-                'launch_url' => 'https://example.com/lti/launch',
-                'client_id' => 'demo-client',
+                'launch_url' => 'https://learning.example.gm/lti/launch',
+                'client_id' => 'bfs-waec-papers',
                 'is_active' => true,
             ]
         );
 
         ScormPackage::query()->updateOrCreate(
-            ['school_id' => $school->id, 'title' => 'Intro Science SCORM'],
+            ['school_id' => $school->id, 'title' => 'Introducing Laboratory Safety'],
             [
                 'version' => '1.2',
-                'entry_point' => 'https://example.com/scorm/index.html',
+                'entry_point' => 'https://learning.example.gm/scorm/lab-safety/index.html',
                 'status' => 'ready',
             ]
         );
