@@ -155,6 +155,7 @@ class PayrollService
             }
             $run->update(['status' => 'paid', 'paid_at' => $paidOn ? Carbon::parse($paidOn)->setTimeFrom(now()) : now(), 'paid_by' => $actor->id, 'payment_reference' => mb_substr($reference, 0, 120)]);
             Ops::audit('hr.payroll.paid', 'Payroll '.$run->period_label.' marked paid', ['run_id' => $run->id, 'net' => $run->net_total]);
+            app(\App\Services\Accounting\AccountingService::class)->postPayrollPaid($run->fresh(), $actor);
 
             return $run;
         });

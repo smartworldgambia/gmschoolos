@@ -106,6 +106,9 @@ Route::middleware(['identify.tenant'])->group(function () {
 Route::middleware(['auth', 'verified', 'platform.admin'])->prefix('platform')->name('platform.')->group(function () {
     Route::get('/', PlatformDashboardController::class)->name('dashboard');
 
+    Route::get('/users', [\App\Http\Controllers\Platform\PlatformUserController::class, 'index'])->middleware('permission:platform.users.manage')->name('users.index');
+    Route::post('/users', [\App\Http\Controllers\Platform\PlatformUserController::class, 'store'])->middleware(['permission:platform.users.manage', 'throttle:20,1'])->name('users.store');
+
     Route::get('/schools', [PlatformSchoolController::class, 'index'])->middleware('permission:platform.schools.view')->name('schools.index');
     Route::post('/schools', [PlatformSchoolController::class, 'store'])->middleware('permission:platform.schools.manage')->name('schools.store');
     Route::get('/schools/{school}', [PlatformSchoolController::class, 'show'])->middleware('permission:platform.schools.view')->name('schools.show');
@@ -320,6 +323,30 @@ Route::middleware(['auth', 'verified', 'identify.tenant', 'school.context'])->gr
         Route::post('/templates', [$c, 'saveTemplate'])->name('templates');
         Route::post('/sms/test', [$c, 'test'])->middleware('throttle:5,1')->name('sms.test');
         Route::post('/sms/{message}/retry', [$c, 'retry'])->whereNumber('message')->middleware('throttle:20,1')->name('sms.retry');
+    });
+
+    // Tenant AIS (Accounting Information System) — school books, not SaaS billing
+    Route::prefix('accounting')->name('accounting.')->middleware('permission:accounting.view')->group(function () {
+        $ais = \App\Http\Controllers\Accounting\AccountingController::class;
+        Route::get('/', [$ais, 'index'])->name('index');
+        Route::get('/journals', [$ais, 'journals'])->name('journals');
+        Route::post('/journals', [$ais, 'storeJournal'])->middleware(['permission:accounting.post', 'throttle:60,1'])->name('journals.store');
+        Route::post('/journals/{journal}/reverse', [$ais, 'reverseJournal'])->whereNumber('journal')->middleware(['permission:accounting.post', 'throttle:30,1'])->name('journals.reverse');
+        Route::get('/ledger', [$ais, 'ledger'])->name('ledger');
+        Route::get('/trial-balance', [$ais, 'trialBalance'])->name('trial-balance');
+        Route::get('/income', [$ais, 'income'])->name('income');
+        Route::get('/balance', [$ais, 'balance'])->name('balance');
+        Route::get('/cashbook', [$ais, 'cashbook'])->name('cashbook');
+        Route::middleware('permission:accounting.manage')->group(function () use ($ais) {
+            Route::get('/setup', [$ais, 'setup'])->name('setup');
+            Route::post('/accounts', [$ais, 'storeAccount'])->middleware('throttle:30,1')->name('accounts.store');
+            Route::patch('/accounts/{account}', [$ais, 'updateAccount'])->whereNumber('account')->name('accounts.update');
+            Route::delete('/accounts/{account}', [$ais, 'destroyAccount'])->whereNumber('account')->name('accounts.destroy');
+            Route::post('/maps', [$ais, 'saveMaps'])->middleware('throttle:30,1')->name('maps.save');
+            Route::post('/opening', [$ais, 'storeOpening'])->middleware('throttle:10,1')->name('opening.store');
+            Route::post('/periods/lock', [$ais, 'lockPeriod'])->middleware('throttle:20,1')->name('periods.lock');
+            Route::post('/periods/unlock', [$ais, 'unlockPeriod'])->middleware('throttle:20,1')->name('periods.unlock');
+        });
     });
 
     // Phase 9A - school fees and finance (parents pay the SCHOOL; the SaaS subscription lives under /billing)

@@ -53,6 +53,8 @@ return [
             'senior_admissions.view', 'senior_admissions.manage',
             // Finance
             'fees.view', 'fees.manage', 'payments.record', 'payments.verify',
+            // AIS (Accounting Information System) — tenant general ledger
+            'accounting.view', 'accounting.post', 'accounting.manage',
             // School subscription (SaaS billing)
             'subscriptions.view', 'subscriptions.manage',
             // LMS
@@ -175,6 +177,7 @@ return [
             'portal.admin',
             'students.view',
             'fees.view', 'fees.manage', 'payments.record', 'payments.verify',
+            'accounting.view', 'accounting.post', 'accounting.manage',
             'subscriptions.view', 'subscriptions.manage',
             'reports.view', 'reports.export',
             'messages.use', 'messages.office',
@@ -183,6 +186,7 @@ return [
         'accountant' => [
             'portal.admin',
             'fees.view', 'payments.record', 'subscriptions.view',
+            'accounting.view', 'accounting.post',
             'payroll.manage', 'reports.view', 'reports.export',
             'procurement.manage', 'events.view', 'staff.self',
         ],

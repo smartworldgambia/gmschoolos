@@ -108,6 +108,7 @@ class InvoiceService
 
         Ops::audit('fin.invoice.generated', 'Invoice '.$invoice->invoice_number.' generated', ['invoice_id' => $invoice->id, 'student_id' => $student->id, 'total' => $invoice->total_amount]);
         $this->notifyGuardians($invoice, 'issued');
+        app(\App\Services\Accounting\AccountingService::class)->postFeeInvoice($invoice, $actor);
 
         return $invoice;
     }
@@ -166,6 +167,7 @@ class InvoiceService
 
         Ops::audit('fin.invoice.created', 'Invoice '.$invoice->invoice_number.' created', ['invoice_id' => $invoice->id, 'student_id' => $student->id, 'total' => $total]);
         $this->notifyGuardians($invoice, 'issued');
+        app(\App\Services\Accounting\AccountingService::class)->postFeeInvoice($invoice, $actor);
 
         return $invoice;
     }

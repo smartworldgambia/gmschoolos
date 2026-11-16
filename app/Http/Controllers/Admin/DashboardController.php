@@ -77,6 +77,7 @@ class DashboardController extends Controller
             ['key' => 'students', 'href' => route('students.index'), 'tone' => 'teal', 'any' => ['students.view']],
             ['key' => 'attendance', 'href' => route('attendance.index'), 'tone' => 'blue', 'any' => ['attendance.record', 'attendance.approve', 'attendance.staff']],
             ['key' => 'fees', 'href' => route('fees.index'), 'tone' => 'navy', 'any' => ['fees.view']],
+            ['key' => 'ais', 'href' => route('accounting.index'), 'tone' => 'purple', 'any' => ['accounting.view']],
             ['key' => 'lms', 'href' => route('lms.courses.index'), 'tone' => 'purple', 'any' => ['lms.view']],
         ], fn (array $action) => $user?->canAny($action['any'])));
 

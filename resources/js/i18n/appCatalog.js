@@ -7,6 +7,7 @@ import { lmsCatalog } from './lmsCatalog.js';
 import { commCatalog } from './commCatalog.js';
 import { integrationsCatalog } from './integrationsCatalog.js';
 import { financeCatalog } from './financeCatalog.js';
+import { aisCatalog } from './aisCatalog.js';
 import { hrCatalog } from './hrCatalog.js';
 import { opsCatalog } from './opsCatalog.js';
 import { histCatalog } from './histCatalog.js';
@@ -1687,7 +1688,7 @@ const ar = {
 };
 
 export const appCatalog = {
-    en: { ...en, ...billingCatalog.en, ...paymentsCatalog.en, ...onboardingCatalog.en, ...academicCatalog.en, ...recordsCatalog.en, ...reportingCatalog.en, ...lmsCatalog.en, ...commCatalog.en, ...integrationsCatalog.en, ...financeCatalog.en, ...hrCatalog.en, ...opsCatalog.en, ...histCatalog.en },
-    fr: { ...fr, ...billingCatalog.fr, ...paymentsCatalog.fr, ...onboardingCatalog.fr, ...academicCatalog.fr, ...recordsCatalog.fr, ...reportingCatalog.fr, ...lmsCatalog.fr, ...commCatalog.fr, ...integrationsCatalog.fr, ...financeCatalog.fr, ...hrCatalog.fr, ...opsCatalog.fr, ...histCatalog.fr },
-    ar: { ...ar, ...billingCatalog.ar, ...paymentsCatalog.ar, ...onboardingCatalog.ar, ...academicCatalog.ar, ...recordsCatalog.ar, ...reportingCatalog.ar, ...lmsCatalog.ar, ...commCatalog.ar, ...integrationsCatalog.ar, ...financeCatalog.ar, ...hrCatalog.ar, ...opsCatalog.ar, ...histCatalog.ar },
+    en: { ...en, ...billingCatalog.en, ...paymentsCatalog.en, ...onboardingCatalog.en, ...academicCatalog.en, ...recordsCatalog.en, ...reportingCatalog.en, ...lmsCatalog.en, ...commCatalog.en, ...integrationsCatalog.en, ...financeCatalog.en, ...aisCatalog.en, ...hrCatalog.en, ...opsCatalog.en, ...histCatalog.en },
+    fr: { ...fr, ...billingCatalog.fr, ...paymentsCatalog.fr, ...onboardingCatalog.fr, ...academicCatalog.fr, ...recordsCatalog.fr, ...reportingCatalog.fr, ...lmsCatalog.fr, ...commCatalog.fr, ...integrationsCatalog.fr, ...financeCatalog.fr, ...aisCatalog.fr, ...hrCatalog.fr, ...opsCatalog.fr, ...histCatalog.fr },
+    ar: { ...ar, ...billingCatalog.ar, ...paymentsCatalog.ar, ...onboardingCatalog.ar, ...academicCatalog.ar, ...recordsCatalog.ar, ...reportingCatalog.ar, ...lmsCatalog.ar, ...commCatalog.ar, ...integrationsCatalog.ar, ...financeCatalog.ar, ...aisCatalog.ar, ...hrCatalog.ar, ...opsCatalog.ar, ...histCatalog.ar },
 };
