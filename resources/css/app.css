@@ -54,6 +54,14 @@
 
     body {
         @apply bg-surface text-brand-ink antialiased;
+        overflow-x: clip;
+    }
+
+    /* Prevent wide module chrome (tabs, tables, filters) from expanding the page on phones. */
+    #app,
+    #app > div {
+        max-width: 100%;
+        min-width: 0;
     }
 
     :focus-visible {
@@ -126,11 +134,29 @@
     }
 
     .module-tabs {
-        @apply mb-6 flex gap-1 overflow-x-auto border-b border-surface-muted;
+        @apply relative -mx-1 mb-5 flex max-w-full gap-0.5 overflow-x-auto border-b border-surface-muted px-1;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        touch-action: pan-x;
+    }
+
+    .module-tabs::-webkit-scrollbar {
+        display: none;
+        height: 0;
+        width: 0;
+    }
+
+    @media (max-width: 639px) {
+        .module-tabs {
+            mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 1.5rem), transparent 100%);
+        }
     }
 
     .module-tab {
-        @apply inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:text-navy;
+        @apply inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-2.5 py-2.5 text-[13px] font-medium text-slate-500 transition hover:text-navy sm:px-3 sm:text-sm;
+        scroll-snap-align: start;
     }
 
     .module-tab-active {
@@ -139,6 +165,59 @@
 
     .filter-bar {
         @apply mb-6 flex flex-wrap items-end gap-3;
+    }
+
+    .filter-toolbar {
+        @apply mb-5 grid max-w-full gap-2 rounded-[1.125rem] border border-surface-muted bg-white p-3 shadow-soft;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-toolbar > .filter-toolbar-search {
+        grid-column: 1 / -1;
+        @apply flex min-w-0 items-stretch gap-2;
+    }
+
+    .filter-toolbar > .filter-toolbar-search > input,
+    .filter-toolbar > .filter-toolbar-search > .ui-input {
+        @apply min-w-0 flex-1;
+    }
+
+    .filter-toolbar > select,
+    .filter-toolbar > .ui-input,
+    .filter-toolbar > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .filter-toolbar > select,
+    .filter-toolbar > .ui-input {
+        @apply w-full;
+    }
+
+    @media (min-width: 640px) {
+        .filter-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .filter-toolbar > .filter-toolbar-search {
+            flex: 1 1 14rem;
+            grid-column: auto;
+            max-width: none;
+        }
+
+        .filter-toolbar > select,
+        .filter-toolbar > .ui-input {
+            width: auto;
+            max-width: 12rem;
+            flex: 0 1 auto;
+        }
+
+        .filter-toolbar > .filter-toolbar-search > .btn-outline {
+            width: auto;
+        }
     }
 
     .profile-shell {
@@ -177,10 +256,22 @@
     }
 
     .page-hero {
-        @apply relative mb-6 overflow-hidden rounded-[1.125rem] border border-surface-muted bg-white px-5 py-5 shadow-soft sm:px-6 sm:py-6;
+        @apply relative mb-5 max-w-full overflow-hidden rounded-[1.125rem] border border-surface-muted bg-white px-4 py-4 shadow-soft sm:mb-6 sm:px-6 sm:py-6;
         background-image:
             radial-gradient(ellipse 42% 85% at 100% 0%, rgb(21 94 239 / 0.08), transparent 58%),
             radial-gradient(ellipse 30% 65% at 92% 100%, rgb(13 148 136 / 0.06), transparent 52%);
+    }
+
+    .page-hero h1 {
+        @apply break-words text-[1.375rem] leading-tight sm:text-[32px];
+    }
+
+    .page-hero .page-hero-actions {
+        @apply w-full sm:w-auto;
+    }
+
+    .page-hero .page-hero-actions > * {
+        @apply w-full sm:w-auto;
     }
 
     .console-title-icon {
@@ -859,21 +950,29 @@
         @apply bg-primary text-white shadow-sm hover:bg-primary hover:text-white;
     }
 
+    .shell-main {
+        @apply min-w-0 max-w-full overflow-x-clip;
+    }
+
+    .shell-content {
+        @apply mx-auto w-full min-w-0 max-w-[88rem] px-3 py-4 pb-[4.75rem] sm:px-6 sm:py-6 lg:px-8 lg:pb-10;
+    }
+
     .shell-topbar {
-        @apply sticky top-0 z-30 border-b border-slate-200/80 bg-white shadow-[0_1px_0_rgba(8,39,70,0.04)];
+        @apply sticky top-0 z-30 max-w-full border-b border-slate-200/80 bg-white shadow-[0_1px_0_rgba(8,39,70,0.04)];
         padding-top: env(safe-area-inset-top, 0px);
     }
 
     .shell-topbar-row {
-        @apply flex h-14 items-center gap-2 px-3 sm:px-4 lg:h-[4.25rem] lg:gap-3 lg:px-6;
+        @apply flex h-14 min-w-0 max-w-full items-center gap-1.5 px-2.5 sm:gap-2 sm:px-4 lg:h-[4.25rem] lg:gap-3 lg:px-6;
     }
 
     .shell-topbar-brand {
-        @apply flex min-w-0 flex-1 items-center gap-2 lg:hidden;
+        @apply flex min-w-0 flex-1 items-center gap-2 overflow-hidden lg:hidden;
     }
 
     .shell-topbar-actions {
-        @apply ms-auto flex shrink-0 items-center gap-0 sm:gap-1.5;
+        @apply ms-auto flex shrink-0 items-center gap-0.5 sm:gap-1.5;
     }
 
     .shell-topbar-icon {
@@ -906,12 +1005,12 @@
 
     .shell-bottom-nav ul,
     .shell-bottom-list {
-        @apply mx-auto flex h-12 max-w-lg items-stretch justify-around px-0.5;
-        height: 3rem;
+        @apply mx-auto flex h-14 max-w-lg items-stretch justify-around px-1;
+        height: 3.5rem;
     }
 
     .shell-bottom-link {
-        @apply flex h-full min-w-0 flex-col items-center justify-center gap-px px-1 text-[10px] font-semibold leading-none whitespace-nowrap transition;
+        @apply flex h-full min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-semibold leading-none whitespace-nowrap transition;
     }
 
     .shell-bottom-link-on {
@@ -923,11 +1022,11 @@
     }
 
     .shell-bottom-icon {
-        @apply flex h-4 w-4 items-center justify-center;
+        @apply flex h-5 w-5 items-center justify-center;
     }
 
     .shell-bottom-icon svg {
-        @apply h-4 w-4;
+        @apply h-5 w-5;
     }
 
     .shell-bottom-icon-on {
