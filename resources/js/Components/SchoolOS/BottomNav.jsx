@@ -28,7 +28,7 @@ export default function BottomNav({ items = [], className = '' }) {
                                     className={`shell-bottom-icon ${isCurrent ? 'shell-bottom-icon-on' : ''}`}
                                     aria-hidden="true"
                                 >
-                                    {item.icon ?? <NavIcon name={item.key} className="h-4 w-4" />}
+                                    {item.icon ?? <NavIcon name={item.key} className="h-5 w-5" />}
                                 </span>
                                 <span className="max-w-full truncate">{label}</span>
                             </Link>

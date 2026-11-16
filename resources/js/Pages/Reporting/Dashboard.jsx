@@ -34,7 +34,9 @@ export default function Dashboard({ nav, user, school, academicYear, tabs = [], 
                 ) : null
             }
         >
-            <p className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t('rpt.notOfficial')}</p>
+            <p className="mb-5 max-w-full rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm leading-relaxed text-amber-900 sm:px-4">
+                {t('rpt.notOfficial')}
+            </p>
             <Filters action={route('reporting.index')} filters={filters} />
 
             <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">

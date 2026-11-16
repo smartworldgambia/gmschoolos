@@ -2,6 +2,7 @@ import PageHeader from '@/Components/SchoolOS/PageHeader';
 import { useLocale } from '@/i18n/LocaleProvider';
 import AppShell from '@/Layouts/AppShell';
 import { Head, Link } from '@inertiajs/react';
+import { useEffect, useRef } from 'react';
 
 /**
  * App shell + heading + a tab bar for an operations module (library, inventory, transport...).
@@ -9,13 +10,23 @@ import { Head, Link } from '@inertiajs/react';
  */
 export default function ModuleLayout({ ns, title, subtitle, actions, tabs = [], current, shell = {}, children, breadcrumbs, icon }) {
     const { t } = useLocale();
+    const tabsRef = useRef(null);
+
+    useEffect(() => {
+        const root = tabsRef.current;
+        if (!root) {
+            return;
+        }
+        const active = root.querySelector('[aria-current="page"]');
+        active?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }, [current]);
 
     return (
         <AppShell title={title} nav={shell.nav} user={shell.user} school={shell.school} academicYear={shell.academicYear}>
             <Head title={title} />
             <PageHeader title={title} subtitle={subtitle} actions={actions} breadcrumbs={breadcrumbs} icon={icon} />
             {tabs.length > 1 ? (
-                <nav className="module-tabs" aria-label={t(`${ns}.tabs.label`)}>
+                <nav ref={tabsRef} className="module-tabs" aria-label={t(`${ns}.tabs.label`)}>
                     {tabs.map((tab) => (
                         <Link
                             key={tab.key}

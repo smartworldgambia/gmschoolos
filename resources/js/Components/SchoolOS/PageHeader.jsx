@@ -37,9 +37,9 @@ export default function PageHeader({
                     {typeof iconName === 'string' ? <NavIcon name={iconName} className="h-5 w-5" /> : iconName}
                 </span>
             ) : null}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
                 <Breadcrumbs items={crumbs} />
-                <h1 className="text-[28px] font-bold tracking-tight text-navy sm:text-[32px]">{title}</h1>
+                <h1 className="text-[1.375rem] font-bold tracking-tight text-navy sm:text-[32px]">{title}</h1>
                 {subtitle ? (
                     <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500 sm:text-[15px]">{subtitle}</p>
                 ) : null}
@@ -48,7 +48,7 @@ export default function PageHeader({
     );
 
     const actionWrap = actions ? (
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">{actions}</div>
+        <div className="page-hero-actions flex flex-wrap items-center gap-2 sm:justify-end">{actions}</div>
     ) : null;
 
     if (isConsole) {

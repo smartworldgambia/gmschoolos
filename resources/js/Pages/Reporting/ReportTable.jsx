@@ -9,8 +9,8 @@ export default function ReportTable({ reports, can = {} }) {
     const rows = reports?.data ?? reports ?? [];
 
     return (
-        <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
-            <table className="min-w-full text-sm">
+        <div className="max-w-full overflow-x-auto rounded-xl bg-white shadow-sm [-webkit-overflow-scrolling:touch]">
+            <table className="min-w-[40rem] w-full text-sm">
                 <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                         <th className="px-4 py-3 text-start">{t('rpt.col.student')}</th>

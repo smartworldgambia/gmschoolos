@@ -182,7 +182,7 @@ export default function AppShell({
     }, [mobileOpen]);
 
     return (
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen max-w-[100vw] overflow-x-clip bg-surface">
             {/* Desktop sidebar */}
             <aside className="shell-sidebar">
                 <div className="flex h-[4.25rem] items-center gap-3 border-b border-white/10 px-5">
@@ -318,7 +318,7 @@ export default function AppShell({
             ) : null}
 
             {/* Main column */}
-            <div className="lg:ps-64">
+            <div className="shell-main min-w-0 max-w-full lg:ps-64">
                 <header className="shell-topbar">
                     <div className="shell-topbar-row">
                         <button
@@ -340,8 +340,8 @@ export default function AppShell({
                             title={schoolName}
                         >
                             <SchoolMark school={school} name={schoolName} className="h-8 w-8 sm:h-9 sm:w-9" />
-                            <span className="min-w-0">
-                                <span className="block truncate text-[13px] font-bold leading-tight text-navy sm:text-sm">
+                            <span className="hidden min-w-0 min-[380px]:block">
+                                <span className="block max-w-[7.5rem] truncate text-[13px] font-bold leading-tight text-navy sm:max-w-[14rem] sm:text-sm">
                                     {schoolName}
                                 </span>
                             </span>
@@ -452,9 +452,9 @@ export default function AppShell({
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-[88rem] px-4 py-6 pb-[4rem] sm:px-6 lg:px-8 lg:pb-10">
+                <main className="shell-content">
                     {flashSuccess || flashError || flashSchoolUrl ? (
-                        <div className="mb-6 space-y-3">
+                        <div className="mb-6 max-w-full space-y-3">
                             {flashSuccess ? (
                                 <div
                                     className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
@@ -462,7 +462,7 @@ export default function AppShell({
                                 >
                                     {flashSuccess}
                                     {flashSchoolUrl ? (
-                                        <p className="mt-2">
+                                        <p className="mt-2 break-all">
                                             <span className="font-medium">{t('domainAdmin.flashUrlLabel')} </span>
                                             <a
                                                 href={flashSchoolUrl}
@@ -486,7 +486,7 @@ export default function AppShell({
                             ) : null}
                         </div>
                     ) : null}
-                    {children}
+                    <div className="min-w-0 max-w-full">{children}</div>
                 </main>
             </div>
 

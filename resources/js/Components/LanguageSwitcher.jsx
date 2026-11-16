@@ -49,7 +49,7 @@ export default function LanguageSwitcher({ className = '', compact = false }) {
                 type="button"
                 className={
                     compact
-                        ? 'inline-flex h-9 items-center gap-0.5 rounded-full px-1.5 text-xs font-semibold text-navy whitespace-nowrap hover:bg-surface sm:h-auto sm:rounded-lg sm:px-2 sm:py-1.5'
+                        ? 'inline-flex h-9 items-center gap-1 rounded-full px-2 text-xs font-semibold text-navy whitespace-nowrap hover:bg-surface sm:h-auto sm:rounded-lg sm:px-2 sm:py-1.5'
                         : 'inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-navy'
                 }
                 aria-haspopup="listbox"
@@ -58,8 +58,10 @@ export default function LanguageSwitcher({ className = '', compact = false }) {
                 onClick={() => setOpen((v) => !v)}
             >
                 <span aria-hidden="true">🌐</span>
-                {current?.label ?? 'EN'}
-                <IconChevron />
+                <span>{current?.label ?? 'EN'}</span>
+                <span className={compact ? 'hidden sm:inline-flex' : 'inline-flex'} aria-hidden="true">
+                    <IconChevron />
+                </span>
             </button>
             {open ? (
                 <ul
