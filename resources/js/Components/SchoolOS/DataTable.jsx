@@ -8,7 +8,7 @@ export default function DataTable({
     headClassName = 'border-b border-surface-muted bg-slate-50/80',
 }) {
     return (
-        <div className={embedded ? className : `overflow-hidden rounded-2xl border border-surface-muted bg-white shadow-soft ${className}`}>
+        <div className={embedded ? className : `overflow-hidden rounded-[1.125rem] border border-surface-muted bg-white shadow-soft ${className}`}>
             <div className="overflow-x-auto">
                 <table className="min-w-full text-start text-sm">
                     <thead>
@@ -36,7 +36,7 @@ export default function DataTable({
                                 const rowKey = row[keyField] ?? row.key ?? `row-${index}`;
 
                                 return (
-                                    <tr key={rowKey} className="border-b border-surface-muted/80 last:border-0 hover:bg-slate-50/70">
+                                    <tr key={rowKey} className="border-b border-surface-muted/80 last:border-0 hover:bg-surface/80">
                                         {columns.map((column) => {
                                             const value = column.render ? column.render(row, index) : row[column.key];
 

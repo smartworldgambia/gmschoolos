@@ -104,8 +104,8 @@ export default function Dashboard({
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                         {t('domainAdmin.dashEyebrow')}
                                     </p>
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-teal/10 px-2 py-0.5 text-[11px] font-semibold text-teal">
-                                        <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden="true" />
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
                                         {t('domainAdmin.dashLive')}
                                     </span>
                                 </div>
@@ -115,7 +115,7 @@ export default function Dashboard({
                                     href={flashSchoolUrl || schoolUrls.primary_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="btn-teal text-sm"
+                                    className="btn-primary text-sm"
                                 >
                                     {t('domainAdmin.openSite')}
                                 </a>

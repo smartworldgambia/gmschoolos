@@ -1,27 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    --color-navy: #082b50;
-    --color-navy-dark: #061f3b;
-    --color-blue: #2878d0;
-    --color-bright: #2878d0;
-    --color-teal: #08b7a5;
+    --color-navy: #082746;
+    --color-navy-dark: #071f3b;
+    --color-blue: #155eef;
+    --color-bright: #2563eb;
+    --color-primary: #155eef;
+    --color-primary-hover: #2563eb;
+    --color-teal: #0d9488;
+    --color-cyan: #38bdf8;
     --color-green: #16a34a;
     --color-surface: #f3f7fc;
-    --color-surface-muted: #e8eef5;
+    --color-surface-muted: #e3eaf2;
+    --color-surface-light: #eff6ff;
     --color-surface-card: #ffffff;
-    --color-ink: #102a43;
+    --color-ink: #0f172a;
     --color-mute: #64748b;
     --color-line: #e3eaf2;
     --color-success: #16a34a;
     --color-warning: #f59e0b;
     --color-danger: #dc2626;
-    --color-info: #2878d0;
-    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --color-info: #0284c7;
+    --radius-control: 0.75rem;
+    --radius-card: 1.125rem;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -51,7 +57,7 @@
     }
 
     :focus-visible {
-        @apply outline-2 outline-offset-2 outline-brand-blue;
+        @apply outline-2 outline-offset-2 outline-primary;
     }
 
     /* Zero-size hash targets sit on the heading so sticky-nav jumps don’t show section padding */
@@ -67,11 +73,72 @@
 
 @layer components {
     .card-surface {
-        @apply rounded-2xl border border-surface-muted bg-white shadow-soft;
+        @apply rounded-[1.125rem] border border-surface-muted bg-white shadow-soft;
     }
 
     .console-card {
-        @apply rounded-2xl border border-surface-muted bg-white p-5 shadow-soft sm:p-6;
+        @apply rounded-[1.125rem] border border-surface-muted bg-white p-5 shadow-soft sm:p-6;
+    }
+
+    .section-card {
+        @apply rounded-[1.125rem] border border-surface-muted bg-white p-5 shadow-soft sm:p-6;
+    }
+
+    .kpi-card {
+        @apply relative overflow-hidden rounded-[1.125rem] border border-surface-muted bg-white p-5 shadow-soft;
+    }
+
+    .kpi-card::after {
+        content: '';
+        position: absolute;
+        inset-inline-end: -1.5rem;
+        bottom: -1.5rem;
+        width: 7rem;
+        height: 7rem;
+        border-radius: 9999px;
+        opacity: 0.18;
+        pointer-events: none;
+        background: radial-gradient(circle at center, var(--kpi-wash, #155eef) 0%, transparent 70%);
+    }
+
+    .kpi-card-green {
+        --kpi-wash: #16a34a;
+    }
+
+    .kpi-card-red {
+        --kpi-wash: #dc2626;
+    }
+
+    .kpi-card-blue {
+        --kpi-wash: #155eef;
+    }
+
+    .kpi-card-purple {
+        --kpi-wash: #7c3aed;
+    }
+
+    .kpi-card-amber {
+        --kpi-wash: #f59e0b;
+    }
+
+    .kpi-card-teal {
+        --kpi-wash: #0d9488;
+    }
+
+    .module-tabs {
+        @apply mb-6 flex gap-1 overflow-x-auto border-b border-surface-muted;
+    }
+
+    .module-tab {
+        @apply inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:text-navy;
+    }
+
+    .module-tab-active {
+        @apply border-primary text-navy;
+    }
+
+    .filter-bar {
+        @apply mb-6 flex flex-wrap items-end gap-3;
     }
 
     .profile-shell {
@@ -103,14 +170,21 @@
     }
 
     .console-hero {
-        @apply relative mb-8 overflow-hidden rounded-2xl border border-surface-muted bg-white px-5 py-6 shadow-soft sm:px-7 sm:py-7;
+        @apply relative mb-8 overflow-hidden rounded-[1.125rem] border border-surface-muted bg-white px-5 py-6 shadow-soft sm:px-7 sm:py-7;
         background-image:
-            radial-gradient(ellipse 48% 90% at 100% 0%, rgb(8 183 165 / 0.1), transparent 58%),
-            radial-gradient(ellipse 34% 70% at 88% 100%, rgb(40 120 208 / 0.07), transparent 52%);
+            radial-gradient(ellipse 48% 90% at 100% 0%, rgb(21 94 239 / 0.1), transparent 58%),
+            radial-gradient(ellipse 34% 70% at 88% 100%, rgb(13 148 136 / 0.07), transparent 52%);
+    }
+
+    .page-hero {
+        @apply relative mb-6 overflow-hidden rounded-[1.125rem] border border-surface-muted bg-white px-5 py-5 shadow-soft sm:px-6 sm:py-6;
+        background-image:
+            radial-gradient(ellipse 42% 85% at 100% 0%, rgb(21 94 239 / 0.08), transparent 58%),
+            radial-gradient(ellipse 30% 65% at 92% 100%, rgb(13 148 136 / 0.06), transparent 52%);
     }
 
     .console-title-icon {
-        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal/10 text-teal;
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary;
     }
 
     .console-section-title {
@@ -134,10 +208,14 @@
     }
 
     .ui-input {
-        @apply block w-full rounded-xl border-surface-muted bg-white text-sm text-brand-ink shadow-none placeholder:text-slate-400 focus:border-teal focus:ring-teal disabled:bg-slate-50 disabled:text-slate-500;
+        @apply block w-full rounded-xl border-surface-muted bg-white text-sm text-brand-ink shadow-none placeholder:text-slate-400 focus:border-primary focus:ring-primary disabled:bg-slate-50 disabled:text-slate-500;
     }
 
     /* Buttons stay single-line across locales; width may grow, height/layout stay fixed. */
+    .btn-primary {
+        @apply inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50;
+    }
+
     .btn-teal {
         @apply inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-teal px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:opacity-50;
     }
@@ -147,7 +225,7 @@
     }
 
     .btn-outline {
-        @apply inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-surface-muted bg-white px-4 py-2.5 text-sm font-semibold text-navy transition hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2;
+        @apply inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-surface-muted bg-white px-4 py-2.5 text-sm font-semibold text-navy transition hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
     }
 
     .btn-danger {
@@ -225,7 +303,7 @@
     }
 
     .lms-nav-pill-active {
-        @apply border-navy bg-transparent text-navy;
+        @apply border-primary bg-transparent text-navy;
     }
 
     .lms-tab {
@@ -746,7 +824,7 @@
     }
 
     .fd-tab-on {
-        @apply border-transparent bg-teal text-white;
+        @apply border-transparent bg-primary text-white;
     }
 
     .fd-table thead th {
@@ -761,8 +839,28 @@
         @apply text-xs font-bold uppercase tracking-[0.16em] text-brand-green;
     }
 
+    .shell-sidebar {
+        @apply fixed inset-y-0 start-0 z-40 hidden w-64 flex-col bg-navy lg:flex;
+        background-image:
+            linear-gradient(180deg, rgb(8 39 70 / 0.92) 55%, rgb(7 31 59 / 0.98) 100%),
+            radial-gradient(ellipse 120% 60% at 50% 115%, rgb(21 94 239 / 0.22), transparent 55%);
+        background-color: var(--color-navy);
+    }
+
+    .shell-sidebar-nav {
+        @apply flex-1 space-y-1 overflow-y-auto px-3 py-4;
+    }
+
+    .shell-nav-item {
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-300 transition hover:bg-white/5 hover:text-white;
+    }
+
+    .shell-nav-item-active {
+        @apply bg-primary text-white shadow-sm hover:bg-primary hover:text-white;
+    }
+
     .shell-topbar {
-        @apply sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-[0_1px_0_rgba(8,43,80,0.04)] backdrop-blur;
+        @apply sticky top-0 z-30 border-b border-slate-200/80 bg-white shadow-[0_1px_0_rgba(8,39,70,0.04)];
         padding-top: env(safe-area-inset-top, 0px);
     }
 
@@ -783,18 +881,18 @@
     }
 
     .shell-topbar-avatar {
-        @apply relative inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full shadow-sm ring-2 ring-slate-200/90 transition hover:ring-teal/40;
+        @apply relative inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full shadow-sm ring-2 ring-slate-200/90 transition hover:ring-primary/40;
     }
 
     .shell-account {
-        @apply absolute end-3 z-10 flex h-auto max-h-[70vh] w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80;
+        @apply absolute end-3 z-10 flex h-auto max-h-[70vh] w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-[1.125rem] bg-white ring-1 ring-slate-200/80;
         top: calc(env(safe-area-inset-top, 0px) + 3.75rem);
-        box-shadow: 0 12px 40px rgba(8, 43, 80, 0.16);
+        box-shadow: 0 12px 40px rgba(8, 39, 70, 0.16);
         animation: shell-account-in 180ms ease-out;
     }
 
     .shell-account-card {
-        @apply flex items-center gap-3 rounded-2xl bg-surface px-3 py-2.5 ring-1 ring-slate-200/80 transition hover:ring-teal/30;
+        @apply flex items-center gap-3 rounded-2xl bg-surface px-3 py-2.5 ring-1 ring-slate-200/80 transition hover:ring-primary/30;
     }
 
     .shell-account-nav {
@@ -817,7 +915,7 @@
     }
 
     .shell-bottom-link-on {
-        @apply text-teal;
+        @apply text-primary;
     }
 
     .shell-bottom-link-off {
@@ -833,7 +931,11 @@
     }
 
     .shell-bottom-icon-on {
-        @apply text-teal;
+        @apply text-primary;
+    }
+
+    .empty-state {
+        @apply flex flex-col items-center justify-center rounded-[1.125rem] border border-dashed border-surface-muted bg-white px-6 py-12 text-center;
     }
 
 }
@@ -854,11 +956,13 @@
      * i18n layout: longer FR/AR labels must not wrap into extra rows or grow control height.
      * Prefer slightly tighter type; width may expand. Never change vertical padding for locale.
      */
+    :lang(fr) .btn-primary,
     :lang(fr) .btn-teal,
     :lang(fr) .btn-navy,
     :lang(fr) .btn-outline,
     :lang(fr) .btn-cta,
     :lang(fr) .btn-danger,
+    :lang(fr) .module-tab,
     :lang(fr) .lms-nav-pill,
     :lang(fr) .lms-dash-tab,
     :lang(fr) .lms-work-chip,
@@ -866,11 +970,13 @@
     :lang(fr) .sd-due,
     :lang(fr) .sd-action,
     :lang(fr) .fd-tab,
+    :lang(ar) .btn-primary,
     :lang(ar) .btn-teal,
     :lang(ar) .btn-navy,
     :lang(ar) .btn-outline,
     :lang(ar) .btn-cta,
     :lang(ar) .btn-danger,
+    :lang(ar) .module-tab,
     :lang(ar) .lms-nav-pill,
     :lang(ar) .lms-dash-tab,
     :lang(ar) .lms-work-chip,

@@ -25,12 +25,12 @@ export default function Dashboard({ stats = {}, timetable = [], classes = [], su
                 <StatCard title={t('dash.stat.classes')} value={stats.classes} tone="teal" />
                 <StatCard title={t('dash.stat.students')} value={stats.students} tone="blue" />
                 <StatCard title={t('dash.stat.courses')} value={stats.courses} tone="navy" />
-                <StatCard title={t('dash.stat.pendingMarking')} value={stats.pending_marking} tone="orange" />
+                <StatCard title={t('dash.stat.pendingMarking')} value={stats.pending_marking} tone="amber" />
                 <StatCard title={t('dash.stat.unreadMessages')} value={stats.unread_messages} tone="purple" />
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2">
-                <Link href={route('attendance.index')} className="btn-outline">
+                <Link href={route('attendance.index')} className="btn-primary">
                     {t('dash.quick.attendance')}
                 </Link>
                 <Link href={route('lms.courses.index')} className="btn-outline">

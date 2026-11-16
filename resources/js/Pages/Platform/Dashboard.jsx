@@ -22,7 +22,7 @@ export default function Dashboard({
             key: 'name',
             label: t('plat.col.school'),
             render: (row) => (
-                <Link href={route('platform.schools.show', row.id)} className="font-medium text-teal hover:underline">
+                <Link href={route('platform.schools.show', row.id)} className="font-medium text-primary hover:underline">
                     {row.name}
                 </Link>
             ),
@@ -41,7 +41,7 @@ export default function Dashboard({
             label: t('plat.dash.col.publicUrl'),
             render: (row) =>
                 row.public_url ? (
-                    <a href={row.public_url} className="font-medium text-teal hover:underline" target="_blank" rel="noreferrer">
+                    <a href={row.public_url} className="font-medium text-primary hover:underline" target="_blank" rel="noreferrer">
                         {String(row.public_url).replace(/^https?:\/\//, '')}
                     </a>
                 ) : (
@@ -64,7 +64,7 @@ export default function Dashboard({
                 title={t('plat.dash.heading')}
                 subtitle={t('plat.dash.subtitle')}
                 actions={
-                    <Link href={route('platform.schools.index')} className="btn-navy whitespace-nowrap text-sm">
+                    <Link href={route('platform.schools.index')} className="btn-primary whitespace-nowrap text-sm">
                         {t('plat.dash.manageSchools')}
                     </Link>
                 }

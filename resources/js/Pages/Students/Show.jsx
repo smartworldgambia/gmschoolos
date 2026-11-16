@@ -203,7 +203,7 @@ export default function Show({
                 }
             />
 
-            <div className="mb-4 flex flex-wrap gap-1 border-b border-slate-200" role="tablist">
+            <div className="module-tabs" role="tablist">
                 {tabs.map(([key, label]) => (
                     <button
                         key={key}
@@ -211,7 +211,7 @@ export default function Show({
                         role="tab"
                         aria-selected={tab === key}
                         onClick={() => setTab(key)}
-                        className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${tab === key ? 'border-b-2 border-teal text-teal' : 'text-slate-500 hover:text-navy'}`}
+                        className={`module-tab ${tab === key ? 'module-tab-active' : ''}`}
                     >
                         {label}
                     </button>

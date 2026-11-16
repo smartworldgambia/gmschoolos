@@ -104,7 +104,7 @@ export default function Index({ notifications, unreadCount = 0, filters = {}, ca
                 />
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal text-white shadow-sm">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
                             <BellIcon />
                         </span>
                         <div className="min-w-0">

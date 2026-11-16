@@ -170,6 +170,9 @@ const en = {
     'shell.logout': 'Log Out',
     'shell.mobileNav': 'Mobile primary',
     'shell.chooseLanguage': 'Language',
+    'shell.breadcrumb': 'Breadcrumb',
+    'shell.emptyTitle': 'Nothing here yet',
+    'shell.emptyDescription': 'When records are available, they will appear in this space.',
 
     'appNav.dashboard': 'Dashboard',
     'appNav.website': 'Website',
@@ -733,6 +736,9 @@ const fr = {
     'shell.logout': 'Déconnexion',
     'shell.mobileNav': 'Navigation mobile',
     'shell.chooseLanguage': 'Langue',
+    'shell.breadcrumb': 'Fil d’Ariane',
+    'shell.emptyTitle': 'Rien pour l’instant',
+    'shell.emptyDescription': 'Les enregistrements apparaîtront ici lorsqu’ils seront disponibles.',
 
     'appNav.dashboard': 'Tableau de bord',
     'appNav.website': 'Site web',
@@ -1291,6 +1297,9 @@ const ar = {
     'shell.logout': 'تسجيل الخروج',
     'shell.mobileNav': 'التنقل للجوال',
     'shell.chooseLanguage': 'اللغة',
+    'shell.breadcrumb': 'مسار التنقل',
+    'shell.emptyTitle': 'لا يوجد شيء بعد',
+    'shell.emptyDescription': 'ستظهر السجلات هنا عند توفرها.',
 
     'appNav.dashboard': 'لوحة التحكم',
     'appNav.website': 'الموقع',

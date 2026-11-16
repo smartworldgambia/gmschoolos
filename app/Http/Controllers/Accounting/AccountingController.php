@@ -39,6 +39,8 @@ class AccountingController extends Controller
             'current' => 'overview',
             'period' => $period,
             'stats' => $this->ais->overview($period['from'], $period['to']),
+            'series' => $this->ais->overviewSeries($period['from'], $period['to']),
+            'recent' => $this->ais->recentJournals(8),
         ]));
     }
 

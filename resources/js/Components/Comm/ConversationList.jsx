@@ -51,12 +51,12 @@ export default function ConversationList({ conversations = [], activeId = null, 
                                 aria-selected={on}
                                 onClick={() => setTab(item.id)}
                                 className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                                    on ? 'bg-teal text-white shadow-sm' : 'bg-[#F0F4F9] text-navy hover:bg-slate-100'
+                                    on ? 'bg-primary text-white shadow-sm' : 'bg-surface text-navy hover:bg-slate-100'
                                 }`}
                             >
                                 {item.label}
                                 {item.id === 'unread' && item.count > 0 ? (
-                                    <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${on ? 'bg-white/20 text-white' : 'bg-teal text-white'}`}>
+                                    <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${on ? 'bg-white/20 text-white' : 'bg-primary text-white'}`}>
                                         {item.count}
                                     </span>
                                 ) : null}
