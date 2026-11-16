@@ -45,7 +45,7 @@ export default function EventsLayout({ canManage = true, title, subtitle, action
                 <div className="pointer-events-none absolute end-24 top-0 hidden h-32 w-48 rounded-full bg-brand-blue/10 blur-2xl lg:block" aria-hidden="true" />
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal text-white shadow-sm">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
                             <NavIcon name="events" className="h-6 w-6" />
                         </span>
                         <div className="min-w-0">
@@ -62,14 +62,12 @@ export default function EventsLayout({ canManage = true, title, subtitle, action
                 </div>
             </div>
             {tabs.length > 1 ? (
-                <nav className="mb-5 flex gap-1 overflow-x-auto rounded-2xl border border-surface-muted bg-white p-1.5 shadow-soft" aria-label={t('ev.tabs.label')}>
+                <nav className="module-tabs" aria-label={t('ev.tabs.label')}>
                     {tabs.map((tab) => (
                         <Link
                             key={tab.key}
                             href={route(tab.route)}
-                            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                                tab.key === current ? 'bg-teal text-white shadow-sm' : 'text-slate-600 hover:bg-surface hover:text-navy'
-                            }`}
+                            className={`module-tab ${tab.key === current ? 'module-tab-active' : ''}`}
                             aria-current={tab.key === current ? 'page' : undefined}
                         >
                             {t(`ev.tab.${tab.key}`)}

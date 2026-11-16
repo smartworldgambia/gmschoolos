@@ -21,14 +21,12 @@ export function FeesTabs({ current, tabs = [] }) {
     }
 
     return (
-        <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200" aria-label={t('fin.tabs.label')}>
+        <nav className="module-tabs" aria-label={t('fin.tabs.label')}>
             {tabs.map((key) => (
                 <Link
                     key={key}
                     href={route(TAB_ROUTES[key])}
-                    className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${
-                        key === current ? 'border-teal-600 text-navy' : 'border-transparent text-slate-500 hover:text-navy'
-                    }`}
+                    className={`module-tab ${key === current ? 'module-tab-active' : ''}`}
                     aria-current={key === current ? 'page' : undefined}
                 >
                     {t(`fin.tab.${key}`)}

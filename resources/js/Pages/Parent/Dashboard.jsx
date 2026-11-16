@@ -26,10 +26,10 @@ export default function Dashboard({ children = [], recentPayments = [], guardian
             />
 
             <div className="space-y-6">
-                {children.length === 0 ? <p className="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm">{t('dash.parent.noChildren')}</p> : null}
+                {children.length === 0 ? <p className="section-card text-center text-sm text-slate-500">{t('dash.parent.noChildren')}</p> : null}
 
                 {children.map((child) => (
-                    <section key={child.id} className="rounded-xl bg-white p-5 shadow-sm">
+                    <section key={child.id} className="section-card">
                         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h2 className="text-lg font-semibold text-navy">{child.full_name}</h2>

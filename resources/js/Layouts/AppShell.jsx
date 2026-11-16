@@ -36,12 +36,12 @@ function SchoolMark({ school, name, className = 'h-9 w-9' }) {
     }
 
     return (
-        <div
-            className={`flex ${className} shrink-0 items-center justify-center rounded-xl bg-teal text-[11px] font-bold tracking-tight text-white shadow-sm`}
-            aria-hidden="true"
-        >
-            {schoolInitials(name)}
-        </div>
+            <div
+                className={`flex ${className} shrink-0 items-center justify-center rounded-xl bg-primary text-[11px] font-bold tracking-tight text-white shadow-sm`}
+                aria-hidden="true"
+            >
+                {schoolInitials(name)}
+            </div>
     );
 }
 
@@ -63,7 +63,7 @@ function UserAvatar({ name, photoUrl, className = 'h-9 w-9', textClass = 'text-[
 
     return (
         <span
-            className={`flex ${className} items-center justify-center rounded-full bg-teal font-bold tracking-tight text-white ${textClass}`}
+            className={`flex ${className} items-center justify-center rounded-full bg-primary font-bold tracking-tight text-white ${textClass}`}
             aria-hidden="true"
         >
             {personInitials(name)}
@@ -78,17 +78,17 @@ function AccountNavItem({ item, label, badge = 0, onNavigate }) {
         <Link
             href={item.href ?? '#'}
             className={`flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition ${
-                isCurrent ? 'bg-teal/10 text-navy' : 'text-slate-600 hover:bg-surface hover:text-navy'
+                isCurrent ? 'bg-primary/10 text-navy' : 'text-slate-600 hover:bg-surface hover:text-navy'
             }`}
             aria-current={isCurrent ? 'page' : undefined}
             onClick={onNavigate}
         >
-            <span className={`shrink-0 ${isCurrent ? 'text-teal' : 'text-slate-400'}`}>
+            <span className={`shrink-0 ${isCurrent ? 'text-primary' : 'text-slate-400'}`}>
                 {item.icon ?? <NavIcon name={item.key} className="h-5 w-5" />}
             </span>
             <span className="min-w-0 flex-1 truncate">{label}</span>
             {badge > 0 ? (
-                <span className="ms-auto shrink-0 rounded-full bg-teal px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                <span className="ms-auto shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
                     {badge > 99 ? '99+' : badge}
                 </span>
             ) : null}
@@ -102,22 +102,22 @@ function NavItem({ item, collapsed = false, dense = false, label, badge = 0 }) {
     return (
         <Link
             href={item.href ?? '#'}
-            className={`group flex items-center rounded-xl font-medium transition ${
-                dense ? 'gap-2 px-2.5 py-1.5 text-xs' : 'gap-3 px-3 py-2.5 text-[13px]'
-            } ${
-                isCurrent
-                    ? 'bg-teal text-white shadow-sm'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+            className={`group shell-nav-item ${dense ? 'gap-2 px-2.5 py-1.5 text-xs' : ''} ${
+                isCurrent ? 'shell-nav-item-active' : ''
             } ${collapsed ? 'justify-center px-2' : ''}`}
             aria-current={isCurrent ? 'page' : undefined}
             title={collapsed ? label : undefined}
         >
-            <span className={`shrink-0 ${isCurrent ? 'text-white' : 'text-slate-400 group-hover:text-teal'}`}>
+            <span className={`shrink-0 ${isCurrent ? 'text-white' : 'text-slate-400 group-hover:text-cyan-300'}`}>
                 {item.icon ?? <NavIcon name={item.key} className={dense ? 'h-4 w-4' : 'h-5 w-5'} />}
             </span>
             {!collapsed ? <span className="truncate">{label}</span> : null}
             {!collapsed && badge > 0 ? (
-                <span className={`ms-auto shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none ${isCurrent ? 'bg-white/20 text-white' : 'bg-teal text-white'}`}>
+                <span
+                    className={`ms-auto shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none ${
+                        isCurrent ? 'bg-white/20 text-white' : 'bg-primary text-white'
+                    }`}
+                >
                     {badge > 99 ? '99+' : badge}
                 </span>
             ) : null}
@@ -184,16 +184,31 @@ export default function AppShell({
     return (
         <div className="min-h-screen bg-surface">
             {/* Desktop sidebar */}
-            <aside className="fixed inset-y-0 start-0 z-40 hidden w-64 flex-col bg-navy-600 lg:flex">
+            <aside className="shell-sidebar">
                 <div className="flex h-[4.25rem] items-center gap-3 border-b border-white/10 px-5">
                     <SchoolMark school={school} name={schoolName} />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-white">{t('shell.brand')}</p>
                         <p className="truncate text-[11px] text-slate-400">{schoolName}</p>
                     </div>
+                    {!isPlatform ? (
+                        <span
+                            className="h-4 w-6 shrink-0 overflow-hidden rounded-sm shadow-sm ring-1 ring-white/20"
+                            title="The Gambia"
+                            aria-hidden="true"
+                        >
+                            <span className="flex h-full w-full flex-col">
+                                <span className="h-1/3 bg-red-600" />
+                                <span className="relative flex h-1/3 items-center bg-white">
+                                    <span className="absolute inset-y-0 start-0 w-[28%] bg-blue-800" />
+                                </span>
+                                <span className="h-1/3 bg-green-600" />
+                            </span>
+                        </span>
+                    ) : null}
                 </div>
 
-                <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label={t('shell.sidebar')}>
+                <nav className="shell-sidebar-nav" aria-label={t('shell.sidebar')}>
                     {nav.map((item, index) => (
                         <div key={item.href ?? item.key ?? item.name}>
                             {index === opsSplit && opsSplit > 0 ? (
@@ -210,9 +225,7 @@ export default function AppShell({
 
                 <div className="border-t border-white/10 p-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal/20 text-sm font-semibold text-teal">
-                            {displayName.charAt(0).toUpperCase()}
-                        </div>
+                        <UserAvatar name={displayName} photoUrl={photoUrl} className="h-9 w-9" textClass="text-sm" />
                         <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-white">{displayName}</p>
                             <p className="truncate text-xs capitalize text-slate-400">{displayRole}</p>
@@ -251,7 +264,7 @@ export default function AppShell({
                                 <span className="min-w-0 flex-1">
                                     <span className="block truncate text-sm font-bold text-navy">{displayName}</span>
                                     <span className="mt-0.5 block truncate text-xs capitalize text-slate-500">{displayRole}</span>
-                                    <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-teal whitespace-nowrap">
+                                    <span className="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-primary">
                                         {t('shell.viewProfile')}
                                         <svg className="h-3.5 w-3.5 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -308,6 +321,18 @@ export default function AppShell({
             <div className="lg:ps-64">
                 <header className="shell-topbar">
                     <div className="shell-topbar-row">
+                        <button
+                            type="button"
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-surface hover:text-navy lg:hidden"
+                            aria-label={t('shell.accountMenu')}
+                            aria-expanded={mobileOpen}
+                            onClick={() => setMobileOpen(true)}
+                        >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+
                         <Link
                             href={homeHref}
                             className="shell-topbar-brand"
@@ -324,10 +349,10 @@ export default function AppShell({
                         {title ? <h1 className="sr-only">{title}</h1> : null}
 
                         <div className="hidden min-w-0 flex-1 lg:block">
-                            <label className="relative w-full max-w-md">
+                            <label className="relative w-full max-w-lg">
                                 <span className="sr-only">{t('shell.search')}</span>
                                 <svg
-                                    className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                    className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -338,7 +363,7 @@ export default function AppShell({
                                 <input
                                     type="search"
                                     placeholder={t('shell.searchPlaceholder')}
-                                    className="w-full rounded-2xl border-surface-muted bg-surface py-2.5 ps-9 pe-3 text-sm text-navy placeholder:text-slate-400 focus:border-teal focus:ring-teal"
+                                    className="w-full rounded-xl border-surface-muted bg-surface py-2.5 ps-10 pe-3 text-sm text-navy placeholder:text-slate-400 focus:border-primary focus:ring-primary"
                                     disabled
                                     aria-disabled="true"
                                 />
@@ -349,7 +374,7 @@ export default function AppShell({
                             <LanguageSwitcher compact className="shrink-0" />
 
                             {yearLabel ? (
-                                <span className="hidden rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-navy sm:inline-flex">
+                                <span className="hidden rounded-xl border border-surface-muted bg-surface px-3 py-1.5 text-xs font-semibold text-navy sm:inline-flex">
                                     {yearLabel}
                                 </span>
                             ) : null}
@@ -386,9 +411,7 @@ export default function AppShell({
                                             className="inline-flex h-9 items-center gap-2 rounded-full px-0.5 text-sm font-medium text-navy hover:bg-surface sm:h-10 sm:px-2"
                                             aria-label={t('shell.accountMenu')}
                                         >
-                                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal/15 text-xs font-bold text-teal">
-                                                {displayName.charAt(0).toUpperCase()}
-                                            </span>
+                                            <UserAvatar name={displayName} photoUrl={photoUrl} className="h-8 w-8" textClass="text-xs" />
                                             <span className="hidden text-start md:block">
                                                 <span className="block leading-tight">{displayName}</span>
                                                 <span className="block text-xs capitalize text-slate-500">
@@ -417,7 +440,7 @@ export default function AppShell({
 
                             <button
                                 type="button"
-                                className={`shell-topbar-avatar lg:hidden ${mobileOpen ? 'ring-teal/50' : ''}`}
+                                className={`shell-topbar-avatar lg:hidden ${mobileOpen ? 'ring-primary/50' : ''}`}
                                 aria-label={t('shell.accountMenu')}
                                 aria-expanded={mobileOpen}
                                 aria-haspopup="dialog"

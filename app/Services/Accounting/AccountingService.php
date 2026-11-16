@@ -338,6 +338,110 @@ class AccountingService
         ];
     }
 
+    /**
+     * Daily (or weekly if the range is long) income vs expense series for charts.
+     *
+     * @return list<array{date:string,label:string,income:int,expenses:int}>
+     */
+    public function overviewSeries(string $from, string $to): array
+    {
+        $start = Carbon::parse($from)->startOfDay();
+        $end = Carbon::parse($to)->endOfDay();
+        $days = max(1, $start->diffInDays($end) + 1);
+        $bucket = $days > 62 ? 'week' : 'day';
+
+        $incomeRows = GlLine::query()
+            ->join('gl_journals', 'gl_journals.id', '=', 'gl_lines.journal_id')
+            ->join('gl_accounts', 'gl_accounts.id', '=', 'gl_lines.account_id')
+            ->where('gl_journals.status', 'posted')
+            ->where('gl_accounts.type', 'income')
+            ->whereBetween('gl_journals.date', [$from, $to])
+            ->selectRaw('gl_journals.date as d, SUM(gl_lines.credit) - SUM(gl_lines.debit) as amount')
+            ->groupBy('gl_journals.date')
+            ->pluck('amount', 'd');
+
+        $expenseRows = GlLine::query()
+            ->join('gl_journals', 'gl_journals.id', '=', 'gl_lines.journal_id')
+            ->join('gl_accounts', 'gl_accounts.id', '=', 'gl_lines.account_id')
+            ->where('gl_journals.status', 'posted')
+            ->where('gl_accounts.type', 'expense')
+            ->whereBetween('gl_journals.date', [$from, $to])
+            ->selectRaw('gl_journals.date as d, SUM(gl_lines.debit) - SUM(gl_lines.credit) as amount')
+            ->groupBy('gl_journals.date')
+            ->pluck('amount', 'd');
+
+        $series = [];
+        if ($bucket === 'day') {
+            for ($cursor = $start->copy(); $cursor->lte($end); $cursor->addDay()) {
+                $key = $cursor->toDateString();
+                $series[] = [
+                    'date' => $key,
+                    'label' => $cursor->format('M d'),
+                    'income' => (int) ($incomeRows[$key] ?? 0),
+                    'expenses' => (int) ($expenseRows[$key] ?? 0),
+                ];
+            }
+
+            return $series;
+        }
+
+        $cursor = $start->copy()->startOfWeek();
+        while ($cursor->lte($end)) {
+            $weekEnd = $cursor->copy()->endOfWeek();
+            $income = 0;
+            $expenses = 0;
+            for ($day = $cursor->copy(); $day->lte($weekEnd) && $day->lte($end); $day->addDay()) {
+                if ($day->lt($start)) {
+                    continue;
+                }
+                $key = $day->toDateString();
+                $income += (int) ($incomeRows[$key] ?? 0);
+                $expenses += (int) ($expenseRows[$key] ?? 0);
+            }
+            $series[] = [
+                'date' => $cursor->toDateString(),
+                'label' => $cursor->format('M d'),
+                'income' => $income,
+                'expenses' => $expenses,
+            ];
+            $cursor->addWeek();
+        }
+
+        return $series;
+    }
+
+    /** @return list<array{id:int,date:?string,memo:?string,source:string,status:string,amount:int,type:string}> */
+    public function recentJournals(int $limit = 8): array
+    {
+        return GlJournal::query()
+            ->withSum('lines as debit_sum', 'debit')
+            ->withSum('lines as credit_sum', 'credit')
+            ->latest('date')
+            ->latest('id')
+            ->limit($limit)
+            ->get()
+            ->map(function (GlJournal $j) {
+                $debit = (int) ($j->debit_sum ?? 0);
+                $credit = (int) ($j->credit_sum ?? 0);
+                $amount = max($debit, $credit);
+                $source = (string) $j->source;
+                $type = str_contains($source, 'fee') || $source === 'opening'
+                    ? 'income'
+                    : (in_array($source, ['payroll', 'procurement', 'procurement_pay'], true) ? 'expense' : 'journal');
+
+                return [
+                    'id' => $j->id,
+                    'date' => $j->date?->toDateString(),
+                    'memo' => $j->memo ?: $j->number,
+                    'source' => $source,
+                    'status' => $j->status,
+                    'amount' => $amount,
+                    'type' => $type,
+                ];
+            })
+            ->all();
+    }
+
     /** @return list<array{account_id:int,code:string,name:string,type:string,debit:int,credit:int}> */
     public function trialBalance(string $asOf): array
     {

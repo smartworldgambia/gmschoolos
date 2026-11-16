@@ -128,7 +128,7 @@ export default function Create({ kind, contacts, children = [], classes = [], li
                                                 direct.setData({ ...direct.data, recipient_id: '', student_id: '' });
                                             }}
                                             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap ${
-                                                who === w ? 'bg-teal text-white' : 'bg-[#F0F4F9] text-navy hover:bg-slate-100'
+                                                who === w ? 'bg-primary text-white' : 'bg-surface text-navy hover:bg-slate-100'
                                             }`}
                                         >
                                             {t(`msg.who.${w}`)}

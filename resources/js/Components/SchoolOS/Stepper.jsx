@@ -25,7 +25,7 @@ export default function Stepper({ steps = [], currentStep = 0, className = '' })
                             <div
                                 className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
                                     isComplete
-                                        ? 'bg-teal text-white'
+                                        ? 'bg-primary text-white'
                                         : isCurrent
                                           ? 'bg-navy text-white ring-4 ring-teal/20'
                                           : 'bg-slate-100 text-slate-400'

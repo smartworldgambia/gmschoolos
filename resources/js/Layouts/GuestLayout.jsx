@@ -35,7 +35,7 @@ export default function GuestLayout({ children, variant = 'card' }) {
                         label={t('auth.brand.name')}
                         ariaLabel={t('auth.brand.homeAria')}
                     />
-                    <div className="w-full max-w-md rounded-2xl border border-navy/8 bg-white/95 px-6 py-8 shadow-card backdrop-blur-sm sm:px-8">
+                    <div className="w-full max-w-md rounded-[1.125rem] border border-navy/8 bg-white/95 px-6 py-8 shadow-card backdrop-blur-sm sm:px-8">
                         {children}
                     </div>
                 </div>

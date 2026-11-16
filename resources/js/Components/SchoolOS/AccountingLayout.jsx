@@ -21,14 +21,12 @@ export function AisTabs({ current, tabs = [] }) {
     }
 
     return (
-        <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200" aria-label={t('ais.tabs.label')}>
+        <nav className="module-tabs" aria-label={t('ais.tabs.label')}>
             {tabs.map((key) => (
                 <Link
                     key={key}
                     href={route(TAB_ROUTES[key])}
-                    className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${
-                        key === current ? 'border-teal-600 text-navy' : 'border-transparent text-slate-500 hover:text-navy'
-                    }`}
+                    className={`module-tab ${key === current ? 'module-tab-active' : ''}`}
                     aria-current={key === current ? 'page' : undefined}
                 >
                     {t(`ais.tab.${key}`)}
@@ -38,11 +36,11 @@ export function AisTabs({ current, tabs = [] }) {
     );
 }
 
-export default function AccountingLayout({ title, subtitle, actions, current, shell = {}, children }) {
+export default function AccountingLayout({ title, subtitle, actions, current, shell = {}, children, breadcrumbs, icon = 'ais' }) {
     return (
         <AppShell title={title} nav={shell.nav} user={shell.user} school={shell.school} academicYear={shell.academicYear}>
             <Head title={title} />
-            <PageHeader title={title} subtitle={subtitle} actions={actions} />
+            <PageHeader title={title} subtitle={subtitle} actions={actions} breadcrumbs={breadcrumbs} icon={icon} />
             <AisTabs current={current} tabs={shell.aisTabs} />
             {children}
         </AppShell>
