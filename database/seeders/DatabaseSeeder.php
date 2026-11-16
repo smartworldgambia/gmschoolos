@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPlansSeeder::class,
             DemoSchoolSeeder::class,
             DemoRichDataSeeder::class,
+            BrightFutureShowcaseSeeder::class,
             MarketingSeeder::class,
             LandingMediaSeeder::class,
         ]);
