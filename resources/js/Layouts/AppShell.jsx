@@ -321,18 +321,6 @@ export default function AppShell({
             <div className="shell-main min-w-0 max-w-full lg:ps-64">
                 <header className="shell-topbar">
                     <div className="shell-topbar-row">
-                        <button
-                            type="button"
-                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-surface hover:text-navy lg:hidden"
-                            aria-label={t('shell.accountMenu')}
-                            aria-expanded={mobileOpen}
-                            onClick={() => setMobileOpen(true)}
-                        >
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
-
                         <Link
                             href={homeHref}
                             className="shell-topbar-brand"
