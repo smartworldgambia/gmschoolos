@@ -193,7 +193,7 @@ class Phase8PortalsTest extends Phase8TestCase
         $parent = $this->actAs($this->parentA)->get(route('parent.dashboard'));
         $parent->assertInertia(fn (Assert $p) => $p->where('unreadMessages', 1)->has('announcements', 1)->where('announcements.0.title', 'Open day')
             ->where('badges.messages', 1)->where('badges.announcements', 1));
-        $this->assertEqualsCanonicalizing(['dashboard', 'children', 'timetable', 'fees', 'messages', 'announcements', 'events', 'notifications'], $this->navKeys($parent));
+        $this->assertEqualsCanonicalizing(['dashboard', 'children', 'timetable', 'reportCards', 'fees', 'messages', 'announcements', 'events', 'notifications'], $this->navKeys($parent));
 
         $teacher = $this->actAs($this->teacher)->get(route('teacher.dashboard'));
         $this->assertContains('messages', $this->navKeys($teacher));

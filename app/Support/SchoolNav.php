@@ -49,7 +49,7 @@ class SchoolNav
         }
 
         if ($user->can('portal.teacher')) {
-            return [
+            return self::visible($user, [
                 ['key' => 'dashboard', 'name' => 'Dashboard', 'href' => route('teacher.dashboard'), 'current' => request()->routeIs('teacher.dashboard')],
                 ['key' => 'attendance', 'name' => 'Attendance', 'href' => route('attendance.index'), 'current' => request()->routeIs('attendance.*')],
                 ['key' => 'timetable', 'name' => 'Timetable', 'href' => route('timetable.index'), 'current' => request()->routeIs('timetable.*')],
@@ -64,11 +64,11 @@ class SchoolNav
                 ['key' => 'events', 'name' => 'Events', 'href' => route('events.index'), 'current' => request()->routeIs('events.*')],
                 ['key' => 'reportConcern', 'name' => 'Report a concern', 'href' => route('safeguarding.report'), 'current' => request()->routeIs('safeguarding.report')],
                 ['key' => 'notifications', 'name' => 'Notifications', 'href' => route('notifications.index'), 'current' => request()->routeIs('notifications.*')],
-            ];
+            ]);
         }
 
         if ($user->can('portal.parent')) {
-            return [
+            return self::visible($user, [
                 ['key' => 'dashboard', 'name' => 'Dashboard', 'href' => route('parent.dashboard'), 'current' => request()->routeIs('parent.*')],
                 ['key' => 'children', 'name' => 'Children', 'href' => route('students.index'), 'current' => request()->routeIs('students.*')],
                 ['key' => 'timetable', 'name' => 'Timetable', 'href' => route('timetable.index'), 'current' => request()->routeIs('timetable.*')],
@@ -78,10 +78,10 @@ class SchoolNav
                 ['key' => 'announcements', 'name' => 'Announcements', 'href' => route('announcements.index'), 'current' => request()->routeIs('announcements.*')],
                 ['key' => 'events', 'name' => 'Events', 'href' => route('events.index'), 'current' => request()->routeIs('events.*')],
                 ['key' => 'notifications', 'name' => 'Notifications', 'href' => route('notifications.index'), 'current' => request()->routeIs('notifications.*')],
-            ];
+            ]);
         }
 
-        return [
+        return self::visible($user, [
             ['key' => 'dashboard', 'name' => 'Dashboard', 'href' => route('student.dashboard'), 'current' => request()->routeIs('student.dashboard')],
             ['key' => 'timetable', 'name' => 'Timetable', 'href' => route('timetable.index'), 'current' => request()->routeIs('timetable.*')],
             ['key' => 'reportCards', 'name' => 'Report cards', 'href' => route('reporting.index'), 'current' => request()->routeIs('reporting.*')],
@@ -91,10 +91,10 @@ class SchoolNav
             ['key' => 'announcements', 'name' => 'Announcements', 'href' => route('announcements.index'), 'current' => request()->routeIs('announcements.*')],
             ['key' => 'events', 'name' => 'Events', 'href' => route('events.index'), 'current' => request()->routeIs('events.*')],
             ['key' => 'notifications', 'name' => 'Notifications', 'href' => route('notifications.index'), 'current' => request()->routeIs('notifications.*')],
-        ];
+        ]);
     }
 
-    /** Navigation items an admin-portal user may actually open, filtered by permission. */
+    /** Navigation items the current user may actually open, filtered by permission. */
     protected static function visible(User $user, array $items): array
     {
         $required = [
@@ -102,11 +102,14 @@ class SchoolNav
             'domain' => 'domains.manage',
             'admissions' => 'admissions.view',
             'students' => 'students.view',
+            'children' => 'students.view',
             'academics' => 'academics.view',
             'attendance' => 'attendance.record|attendance.approve|attendance.staff',
-            'timetable' => 'timetable.manage',
-            'exams' => 'exams.manage',
+            'timetable' => 'timetable.view|timetable.manage',
+            'exams' => 'exams.manage|exams.mark',
             'reportCards' => 'exams.view|exams.mark|exams.manage|students.view',
+            'myCourses' => 'lms.view',
+            'reportConcern' => 'safeguarding.report',
             'externalExams' => 'external_exams.view',
             'seniorSecondary' => 'senior_admissions.view',
             'records' => 'records.manage|senior_admissions.view',
