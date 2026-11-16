@@ -26,6 +26,12 @@ class PlatformNav
                 'current' => request()->routeIs('platform.schools.*'),
             ],
             [
+                'key' => 'platformStaff',
+                'name' => 'Staff',
+                'href' => route('platform.users.index'),
+                'current' => request()->routeIs('platform.users.*'),
+            ],
+            [
                 'key' => 'registrations',
                 'name' => 'Registrations',
                 'href' => route('platform.registrations.index'),
@@ -93,9 +99,20 @@ class PlatformNav
             ],
         ];
 
-        // Credentials are for the few who may change them; everyone else would only meet a "forbidden" page.
-        $canConfigure = (bool) auth()->user()?->can('platform.integrations.configure');
+        // Credentials / platform staff directory are for the few who may change them.
+        $user = auth()->user();
+        $canConfigure = (bool) $user?->can('platform.integrations.configure');
+        $canUsers = (bool) $user?->can('platform.users.manage');
 
-        return array_values(array_filter($items, fn (array $item) => $item['key'] !== 'integrations' || $canConfigure));
+        return array_values(array_filter($items, function (array $item) use ($canConfigure, $canUsers) {
+            if ($item['key'] === 'integrations') {
+                return $canConfigure;
+            }
+            if ($item['key'] === 'platformStaff') {
+                return $canUsers;
+            }
+
+            return true;
+        }));
     }
 }

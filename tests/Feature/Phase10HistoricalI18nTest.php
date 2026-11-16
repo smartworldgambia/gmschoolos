@@ -15,11 +15,12 @@ class Phase10HistoricalI18nTest extends Phase8TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Dashboard')
-                ->has('quickActions', 4)
+                ->has('quickActions', 5)
                 ->where('quickActions.0.key', 'students')
                 ->where('quickActions.1.key', 'attendance')
                 ->where('quickActions.2.key', 'fees')
-                ->where('quickActions.3.key', 'lms')
+                ->where('quickActions.3.key', 'ais')
+                ->where('quickActions.4.key', 'lms')
                 ->missing('quickActions.0.label')
             );
     }

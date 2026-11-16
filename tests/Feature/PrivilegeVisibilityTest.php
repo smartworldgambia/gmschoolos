@@ -40,7 +40,7 @@ class PrivilegeVisibilityTest extends TestCase
         $this->assertSame(route('school.domains.edit'), $this->prop($response, 'domainSettingsUrl'));
         $this->assertNotNull($this->prop($response, 'schoolUrls'));
         $this->assertContains('domain', $this->navKeys($response));
-        $this->assertSame(['students', 'attendance', 'fees', 'lms'], $this->quickActionKeys($response));
+        $this->assertSame(['students', 'attendance', 'fees', 'ais', 'lms'], $this->quickActionKeys($response));
         $this->assertTrue($this->prop($response, 'can.students'));
         $this->assertTrue($this->prop($response, 'can.fees'));
     }
@@ -60,7 +60,8 @@ class PrivilegeVisibilityTest extends TestCase
         $this->assertNotContains('students', $this->navKeys($response));
         $this->assertNotContains('hr', $this->navKeys($response));
         $this->assertContains('fees', $this->navKeys($response));
-        $this->assertSame(['fees'], $this->quickActionKeys($response));
+        $this->assertContains('ais', $this->navKeys($response));
+        $this->assertSame(['fees', 'ais'], $this->quickActionKeys($response));
         $this->assertFalse($this->prop($response, 'can.students'));
         $this->assertTrue($this->prop($response, 'can.fees'));
     }

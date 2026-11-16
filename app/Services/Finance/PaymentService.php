@@ -54,6 +54,8 @@ class PaymentService
 
             Ops::audit('fin.payment.recorded', 'Payment '.$payment->receipt_number.' recorded', ['payment_id' => $payment->id, 'invoice_id' => $invoice->id, 'amount' => $amount, 'method' => $method]);
 
+            app(\App\Services\Accounting\AccountingService::class)->postFeePayment($payment, $actor);
+
             return $payment;
         });
     }
@@ -127,6 +129,8 @@ class PaymentService
             Ops::audit('fin.payment.confirmed', 'Payment '.$payment->receipt_number.' confirmed', ['payment_id' => $payment->id, 'invoice_id' => $invoice->id, 'amount' => $payment->amount]);
             $this->tell($payment, 'Payment received', 'Your payment of '.Money::format((int) $payment->amount).' for invoice '.$invoice->invoice_number.' was confirmed. Receipt '.$payment->receipt_number.'.', 'success');
 
+            app(\App\Services\Accounting\AccountingService::class)->postFeePayment($payment, $actor);
+
             return $payment;
         });
     }
@@ -160,6 +164,8 @@ class PaymentService
             $this->invoices->recalculate(Invoice::query()->findOrFail($payment->invoice_id));
 
             Ops::audit('fin.payment.voided', 'Payment '.$payment->receipt_number.' voided', ['payment_id' => $payment->id, 'invoice_id' => $payment->invoice_id, 'amount' => $payment->amount, 'reason' => $this->clip($reason, 200)]);
+
+            app(\App\Services\Accounting\AccountingService::class)->reverseFeePayment($payment, $actor);
 
             return $payment;
         });

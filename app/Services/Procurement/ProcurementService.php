@@ -316,6 +316,7 @@ class ProcurementService
             }
             $inv->update(['status' => 'approved', 'approved_by' => $actor->id]);
             Ops::audit('proc.invoice.approved', 'Supplier invoice '.$inv->invoice_number.' approved', ['invoice_id' => $inv->id, 'amount' => $inv->amount]);
+            app(\App\Services\Accounting\AccountingService::class)->postProcurementInvoice($inv->fresh(), $actor);
 
             return $inv;
         });
@@ -338,6 +339,7 @@ class ProcurementService
             }
             $inv->update(['status' => 'paid', 'paid_on' => $paidOn, 'payment_reference' => mb_substr($reference, 0, 120)]);
             Ops::audit('proc.invoice.paid', 'Supplier invoice '.$inv->invoice_number.' paid', ['invoice_id' => $inv->id, 'amount' => $inv->amount, 'reference' => $inv->payment_reference]);
+            app(\App\Services\Accounting\AccountingService::class)->postProcurementPayment($inv->fresh());
 
             return $inv;
         });
