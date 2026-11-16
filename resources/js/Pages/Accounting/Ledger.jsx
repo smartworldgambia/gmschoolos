@@ -10,7 +10,7 @@ export default function Ledger({ accounts = [], accountId = null, rows = [], per
     function apply(e) {
         e.preventDefault();
         const fd = new FormData(e.target);
-        router.get(route('accounting.ledger'), Object account_id: fd.get('account_id'), from: fd.get('from'), to: fd.get('to') }, { preserveState: true });
+        router.get(route('accounting.ledger'), { account_id: fd.get('account_id'), from: fd.get('from'), to: fd.get('to') }, { preserveState: true });
     }
 
     const columns = [
