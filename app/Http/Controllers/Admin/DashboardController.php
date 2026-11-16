@@ -70,21 +70,34 @@ class DashboardController extends Controller
                 'created_at' => $log->created_at?->diffForHumans(),
             ]);
 
-        $schoolUrls = $school ? $domains->urlsFor($school->fresh('domains')) : null;
+        $user = auth()->user();
+        $canManageSchoolUrl = (bool) $user?->canAny(['domains.manage', 'website.manage', 'school.settings.manage']);
+
+        $quickActions = array_values(array_filter([
+            ['key' => 'students', 'href' => route('students.index'), 'tone' => 'teal', 'any' => ['students.view']],
+            ['key' => 'attendance', 'href' => route('attendance.index'), 'tone' => 'blue', 'any' => ['attendance.record', 'attendance.approve', 'attendance.staff']],
+            ['key' => 'fees', 'href' => route('fees.index'), 'tone' => 'navy', 'any' => ['fees.view']],
+            ['key' => 'lms', 'href' => route('lms.courses.index'), 'tone' => 'purple', 'any' => ['lms.view']],
+        ], fn (array $action) => $user?->canAny($action['any'])));
 
         return Inertia::render('Admin/Dashboard', array_merge($this->shellProps(), [
             'billing' => $school ? app(SubscriptionLifecycle::class)->state($school) : null,
-            'billingUrl' => auth()->user()?->can('subscriptions.view') ? route('billing.index') : null,
+            'billingUrl' => $user?->can('subscriptions.view') ? route('billing.index') : null,
             'stats' => $cached['stats'],
             'recentActivity' => $recentActivity,
-            'quickActions' => [
-                ['key' => 'students', 'href' => route('students.index'), 'tone' => 'teal'],
-                ['key' => 'attendance', 'href' => route('academics.index'), 'tone' => 'blue'],
-                ['key' => 'fees', 'href' => route('fees.index'), 'tone' => 'navy'],
-                ['key' => 'lms', 'href' => route('lms.courses.index'), 'tone' => 'purple'],
+            'quickActions' => array_map(fn (array $action) => [
+                'key' => $action['key'],
+                'href' => $action['href'],
+                'tone' => $action['tone'],
+            ], $quickActions),
+            'schoolUrls' => $canManageSchoolUrl && $school ? $domains->urlsFor($school->fresh('domains')) : null,
+            'domainSettingsUrl' => $user?->can('domains.manage') ? route('school.domains.edit') : null,
+            'can' => [
+                'students' => (bool) $user?->can('students.view'),
+                'staff' => (bool) $user?->canAny(['hr.view', 'students.view']),
+                'classes' => (bool) $user?->canAny(['academics.view', 'students.view']),
+                'fees' => (bool) $user?->can('fees.view'),
             ],
-            'schoolUrls' => $schoolUrls,
-            'domainSettingsUrl' => route('school.domains.edit'),
         ]));
     }
 }

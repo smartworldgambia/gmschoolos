@@ -341,13 +341,15 @@ class CustomDomainTest extends TestCase
 
     public function test_non_admin_roles_cannot_open_domain_settings(): void
     {
-        $teacher = User::factory()->create([
-            'school_id' => $this->school->id,
-            'email_verified_at' => now(),
-        ]);
-        $teacher->assignRole('teacher');
+        foreach (['teacher', 'accountant', 'hr_officer'] as $role) {
+            $user = User::factory()->create([
+                'school_id' => $this->school->id,
+                'email_verified_at' => now(),
+            ]);
+            $user->assignRole($role);
 
-        $this->actingAs($teacher)->get(route('school.domains.edit'))->assertForbidden();
+            $this->actingAs($user)->get(route('school.domains.edit'))->assertForbidden();
+        }
     }
 
     public function test_domain_limit_applies_to_every_school(): void
@@ -710,6 +712,7 @@ class CustomDomainTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Admin/Dashboard')
+                ->where('domainSettingsUrl', route('school.domains.edit'))
                 ->where('schoolUrls.primary_host', 'alpha.gambiaschoolos.com')
                 ->where('schoolUrls.platform_host', 'alpha.gambiaschoolos.com')
                 ->where('schoolUrls.primary_url', 'https://alpha.gambiaschoolos.com/'));

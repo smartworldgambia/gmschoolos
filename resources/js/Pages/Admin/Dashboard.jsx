@@ -40,7 +40,8 @@ export default function Dashboard({
     recentActivity = [],
     quickActions = [],
     schoolUrls = null,
-    domainSettingsUrl,
+    domainSettingsUrl = null,
+    can = {},
     nav = [],
     user,
     school,
@@ -146,12 +147,22 @@ export default function Dashboard({
                 </section>
             ) : null}
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard title={t('dash.admin.stat.students')} value={students} trend={stats.students_trend} tone="teal" icon={<UsersIcon />} />
-                <StatCard title={t('dash.admin.stat.teachers')} value={stats.teachers ?? stats.total_teachers} trend={stats.teachers_trend} tone="blue" icon={<UsersIcon />} />
-                <StatCard title={t('dash.admin.stat.classes')} value={classes} trend={stats.classes_trend} tone="purple" icon={<UsersIcon />} />
-                <StatCard title={t('dash.admin.stat.fees')} value={stats.fees_collected ?? stats.feesCollected} trend={stats.fees_trend} tone="orange" icon={<UsersIcon />} />
-            </div>
+            {can.students || can.staff || can.classes || can.fees ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {can.students ? (
+                        <StatCard title={t('dash.admin.stat.students')} value={students} trend={stats.students_trend} tone="teal" icon={<UsersIcon />} />
+                    ) : null}
+                    {can.staff ? (
+                        <StatCard title={t('dash.admin.stat.teachers')} value={stats.teachers ?? stats.total_teachers} trend={stats.teachers_trend} tone="blue" icon={<UsersIcon />} />
+                    ) : null}
+                    {can.classes ? (
+                        <StatCard title={t('dash.admin.stat.classes')} value={classes} trend={stats.classes_trend} tone="purple" icon={<UsersIcon />} />
+                    ) : null}
+                    {can.fees ? (
+                        <StatCard title={t('dash.admin.stat.fees')} value={stats.fees_collected ?? stats.feesCollected} trend={stats.fees_trend} tone="orange" icon={<UsersIcon />} />
+                    ) : null}
+                </div>
+            ) : null}
 
             {quickActions.length > 0 ? (
                 <section className="mt-8">
@@ -171,34 +182,36 @@ export default function Dashboard({
                 </section>
             ) : null}
 
-            <div className="mt-8 grid gap-6 lg:grid-cols-5">
-                <section className="lg:col-span-3">
+            <div className={`mt-8 grid gap-6 ${can.students || can.classes ? 'lg:grid-cols-5' : ''}`}>
+                <section className={can.students || can.classes ? 'lg:col-span-3' : ''}>
                     <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
                         {t('dash.admin.activity')}
                     </h2>
                     <DataTable columns={activityColumns} rows={recentActivity} emptyMessage={t('dash.admin.noActivity')} />
                 </section>
 
-                <section className="lg:col-span-2">
-                    <div className="rounded-xl bg-white p-5 shadow-sm">
-                        <h2 className="text-base font-semibold text-navy">{t('dash.admin.enrolmentTrend')}</h2>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-500">
-                            {students || classes
-                                ? t('dash.admin.enrolmentNote', { students, classes })
-                                : t('dash.admin.enrolmentFallback')}
-                        </p>
-                        {stats.enrolment_series?.length ? (
-                            <ul className="mt-4 space-y-2">
-                                {stats.enrolment_series.map((point) => (
-                                    <li key={point.label} className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-500">{point.label}</span>
-                                        <span className="font-semibold text-navy">{point.value}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : null}
-                    </div>
-                </section>
+                {can.students || can.classes ? (
+                    <section className="lg:col-span-2">
+                        <div className="rounded-xl bg-white p-5 shadow-sm">
+                            <h2 className="text-base font-semibold text-navy">{t('dash.admin.enrolmentTrend')}</h2>
+                            <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                                {students || classes
+                                    ? t('dash.admin.enrolmentNote', { students, classes })
+                                    : t('dash.admin.enrolmentFallback')}
+                            </p>
+                            {stats.enrolment_series?.length ? (
+                                <ul className="mt-4 space-y-2">
+                                    {stats.enrolment_series.map((point) => (
+                                        <li key={point.label} className="flex items-center justify-between text-sm">
+                                            <span className="text-slate-500">{point.label}</span>
+                                            <span className="font-semibold text-navy">{point.value}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : null}
+                        </div>
+                    </section>
+                ) : null}
             </div>
         </AppShell>
     );
