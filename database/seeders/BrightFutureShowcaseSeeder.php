@@ -7,6 +7,7 @@ use App\Models\AnnouncementRecipient;
 use App\Models\FeeAdjustment;
 use App\Models\GlAccount;
 use App\Models\GlJournal;
+use App\Models\GlLine;
 use App\Models\NewsPost;
 use App\Models\School;
 use App\Models\User;
@@ -17,10 +18,18 @@ use Illuminate\Database\Seeder;
 
 /**
  * Deepens Bright Future School with realistic operational data for demos —
- * especially AIS journals — without any "demo" wording in user-visible fields.
+ * especially AIS journals linked to real fee documents — without "demo" wording.
  */
 class BrightFutureShowcaseSeeder extends Seeder
 {
+    /** Manual fee stand-ins removed once real fee_invoice / fee_payment journals are backfilled. */
+    private const LEGACY_FEE_MANUAL_MEMOS = [
+        'Tuition collections deposited — Week 1 October',
+        'Fee income recognised — mid-term invoices',
+        'Wave mobile money fee collections — November',
+        'Scholarship discount — Lamin Ceesay (Term 1)',
+    ];
+
     public function run(): void
     {
         $school = School::query()->where('slug', 'brightfuture')->first();
@@ -70,8 +79,7 @@ class BrightFutureShowcaseSeeder extends Seeder
         $ais->ensureReady();
 
         if ($ais->setupNeeded()) {
-            $maps = $coa->maps();
-            $ais->saveMaps($maps);
+            $ais->saveMaps($coa->maps());
         }
 
         $accounts = GlAccount::query()
@@ -101,6 +109,21 @@ class BrightFutureShowcaseSeeder extends Seeder
             }
         }
 
+        // Drop earlier stand-in fee manuals so AIS income/cash come from real fee documents.
+        $this->purgeLegacyFeeManuals($school);
+
+        $result = $ais->backfillFeeLedgers($finance);
+        if ($result['skipped']) {
+            $this->command?->warn('AIS fee backfill skipped (account maps incomplete).');
+        } else {
+            $this->command?->info(sprintf(
+                'AIS fee backfill: %d invoices, %d payments linked.',
+                $result['invoices'],
+                $result['payments']
+            ));
+        }
+
+        // Operating journals only — fee income/collections come from fee_invoice / fee_payment.
         $manuals = [
             [
                 'date' => '2026-09-12',
@@ -116,14 +139,6 @@ class BrightFutureShowcaseSeeder extends Seeder
                 'lines' => [
                     ['account_id' => $id('5200'), 'debit' => 18400],
                     ['account_id' => $id('1010'), 'credit' => 18400],
-                ],
-            ],
-            [
-                'date' => '2026-10-03',
-                'memo' => 'Tuition collections deposited — Week 1 October',
-                'lines' => [
-                    ['account_id' => $id('1010'), 'debit' => 96500],
-                    ['account_id' => $id('1100'), 'credit' => 96500],
                 ],
             ],
             [
@@ -156,30 +171,6 @@ class BrightFutureShowcaseSeeder extends Seeder
                 'lines' => [
                     ['account_id' => $id('5300'), 'debit' => 9200],
                     ['account_id' => $id('2000'), 'credit' => 9200],
-                ],
-            ],
-            [
-                'date' => '2026-11-05',
-                'memo' => 'Fee income recognised — mid-term invoices',
-                'lines' => [
-                    ['account_id' => $id('1100'), 'debit' => 142500],
-                    ['account_id' => $id('4000'), 'credit' => 142500],
-                ],
-            ],
-            [
-                'date' => '2026-11-10',
-                'memo' => 'Wave mobile money fee collections — November',
-                'lines' => [
-                    ['account_id' => $id('1010'), 'debit' => 67800],
-                    ['account_id' => $id('1100'), 'credit' => 67800],
-                ],
-            ],
-            [
-                'date' => '2026-11-12',
-                'memo' => 'Scholarship discount — Lamin Ceesay (Term 1)',
-                'lines' => [
-                    ['account_id' => $id('5400'), 'debit' => 1500],
-                    ['account_id' => $id('1100'), 'credit' => 1500],
                 ],
             ],
             [
@@ -217,6 +208,20 @@ class BrightFutureShowcaseSeeder extends Seeder
             } catch (\Throwable $e) {
                 $this->command?->warn('Journal skipped ('.$row['memo'].'): '.$e->getMessage());
             }
+        }
+    }
+
+    private function purgeLegacyFeeManuals(School $school): void
+    {
+        $journals = GlJournal::query()
+            ->where('school_id', $school->id)
+            ->where('source', 'manual')
+            ->whereIn('memo', self::LEGACY_FEE_MANUAL_MEMOS)
+            ->get();
+
+        foreach ($journals as $journal) {
+            GlLine::query()->where('journal_id', $journal->id)->delete();
+            $journal->delete();
         }
     }
 

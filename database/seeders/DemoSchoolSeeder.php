@@ -447,15 +447,22 @@ class DemoSchoolSeeder extends Seeder
             $paid = $i < 5 ? $total : ($i < 7 ? (int) ($total * 0.5) : 0);
             $status = $paid >= $total ? 'paid' : ($paid > 0 ? 'partial' : 'overdue');
 
+            $issueDay = max(1, min((int) now()->day - 1, 3 + $i));
+            $paidDay = max($issueDay, min((int) now()->day, $issueDay + 2));
+            $issuedAt = now()->copy()->startOfMonth()->addDays($issueDay - 1)->setTime(9, 0);
+            $paidAt = now()->copy()->startOfMonth()->addDays($paidDay - 1)->setTime(11, 0);
+
             $invoice = Invoice::query()->updateOrCreate(
                 ['school_id' => $school->id, 'invoice_number' => 'INV-2025-'.str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT)],
                 [
                     'student_id' => $student->id,
                     'status' => $status,
+                    'subtotal' => $total,
+                    'adjustments_total' => 0,
                     'total_amount' => $total,
                     'amount_paid' => $paid,
-                    'due_on' => now()->subDays(10)->toDateString(),
-                    'issued_at' => now()->subDays(40),
+                    'due_on' => now()->addDays(14)->toDateString(),
+                    'issued_at' => $issuedAt,
                 ]
             );
 
@@ -476,7 +483,8 @@ class DemoSchoolSeeder extends Seeder
                         'student_id' => $student->id,
                         'amount' => $paid,
                         'method' => $i % 2 === 0 ? 'wave' : 'cash',
-                        'paid_at' => now()->subDays(5 + $i),
+                        'status' => 'confirmed',
+                        'paid_at' => $paidAt,
                         'recorded_by' => $admin->id,
                         'receipt_sent' => true,
                     ]
