@@ -12,6 +12,7 @@ use App\Services\Billing\SubscriptionLifecycle;
 use App\Services\Platform\QuotaService;
 use App\Services\School\SchoolDomainService;
 use App\Services\School\SchoolLandingProvisioner;
+use App\Support\SchoolCategoryCatalog;
 use App\Support\SchoolTypes;
 use App\Support\TenantContext;
 use Illuminate\Http\UploadedFile;
@@ -80,6 +81,7 @@ class SchoolProvisioner
             'name' => $data['school_name'],
             'slug' => $data['subdomain'],
             'category' => $category,
+            'enabled_categories' => SchoolCategoryCatalog::defaultEnabledCategories($category),
             'registration_number' => $data['registration_number'] ?? null,
             'country' => 'GM',
             'region' => $data['region'] ?? null,

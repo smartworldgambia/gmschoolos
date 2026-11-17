@@ -94,8 +94,27 @@ class SchoolController extends Controller
                 'billing_email' => $school->billing_email,
                 'phone' => $school->phone,
                 'category' => $school->category,
+                'enabled_categories' => \App\Support\SchoolCategoryCatalog::enabledCategories($school),
                 'public_url' => app(SchoolDomainService::class)->urlsFor($school)['primary_url'],
             ],
+            'categoryUpgrades' => \App\Models\SchoolCategoryUpgradeRequest::query()
+                ->where('school_id', $school->id)
+                ->latest('id')
+                ->limit(10)
+                ->get()
+                ->map(fn (\App\Models\SchoolCategoryUpgradeRequest $r) => [
+                    'id' => $r->id,
+                    'status' => $r->status,
+                    'current_categories' => $r->current_categories,
+                    'requested_categories' => $r->requested_categories,
+                    'target_billing_type' => $r->target_billing_type,
+                    'reason' => $r->reason,
+                    'review_note' => $r->review_note,
+                    'created_at' => $r->created_at?->toDateTimeString(),
+                    'reviewed_at' => $r->reviewed_at?->toDateTimeString(),
+                    'approve_url' => route('platform.schools.category-upgrades.approve', [$school, $r]),
+                    'reject_url' => route('platform.schools.category-upgrades.reject', [$school, $r]),
+                ]),
             'domains' => $school->domains->map(fn (Domain $d) => [
                 'id' => $d->id,
                 'host' => $d->host,
@@ -138,6 +157,7 @@ class SchoolController extends Controller
         ]));
     }
 
+
     public function store(Request $request, QuotaService $quotas, SubscriptionLifecycle $lifecycle): RedirectResponse
     {
         $validated = $request->validate([
@@ -167,6 +187,7 @@ class SchoolController extends Controller
             'region' => $validated['region'] ?? null,
             'country' => 'GM',
             'category' => $validated['school_type'],
+            'enabled_categories' => \App\Support\SchoolCategoryCatalog::defaultEnabledCategories($validated['school_type']),
             'status' => 'active',
             'website_published' => false,
         ]);

@@ -189,6 +189,8 @@ function BrandingStep({ step, branding, links }) {
 function TypeStep({ step, schoolType, links }) {
     const { t } = useLocale();
     const label = t(`setup.type.${schoolType.category}`);
+    const enabled = schoolType.enabled_categories ?? [];
+    const canUpgrade = (schoolType.upgradeable_categories ?? []).length > 0;
 
     return (
         <Card title={t('setup.type.title')} help={t('setup.type.help')}>
@@ -208,7 +210,22 @@ function TypeStep({ step, schoolType, links }) {
                     <dd className="mt-1 text-base font-semibold text-navy" dir="ltr">{schoolType.trial_ends_at ?? '-'}</dd>
                 </div>
             </dl>
+            {enabled.length ? (
+                <p className="mt-4 text-sm text-slate-600">
+                    <span className="font-semibold text-navy">{t('setup.type.enabled')}: </span>
+                    {enabled.map((c) => t(`setup.type.${c}`)).join(' · ')}
+                </p>
+            ) : null}
             <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">{t('setup.type.changeNote')}</p>
+            {schoolType.pending_upgrade ? (
+                <p className="mt-3 text-sm text-slate-600">{t('setup.type.pendingUpgrade')}</p>
+            ) : canUpgrade && schoolType.billing_url ? (
+                <div className="mt-3">
+                    <Link href={schoolType.billing_url} className="btn-outline whitespace-nowrap text-sm">
+                        {t('setup.type.requestUpgrade')}
+                    </Link>
+                </div>
+            ) : null}
             <StepActions step={step} links={links}>
                 <button type="button" className="btn-teal whitespace-nowrap text-sm" onClick={() => router.post(route('setup.type'), {}, { preserveScroll: true })}>
                     {t('setup.type.confirm')}
@@ -254,11 +271,21 @@ function DoneButton({ stepKey, label }) {
     );
 }
 
-function StructureStep({ step, levels, links }) {
+function StructureStep({ step, levels, links, schoolType }) {
     const { t } = useLocale();
+    const packLocked = Boolean(schoolType?.pack_locked);
+    const allowed = schoolType?.allowed_levels ?? [];
 
     return (
-        <Card title={t('setup.structure.title')} help={t('setup.structure.help')}>
+        <Card title={t('setup.structure.title')} help={packLocked ? t('setup.structure.packHelp') : t('setup.structure.help')}>
+            {packLocked && allowed.length ? (
+                <div className="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    <p className="font-semibold text-navy">{t('setup.structure.allowed')}</p>
+                    <p className="mt-1 leading-6" dir="ltr">
+                        {allowed.map((l) => (l.code ? `${l.name} (${l.code})` : l.name)).join(' · ')}
+                    </p>
+                </div>
+            ) : null}
             <ItemList
                 items={levels}
                 empty={t('setup.structure.empty')}
@@ -610,7 +637,7 @@ export default function SetupIndex(props) {
         profile: <ProfileStep step={step} profile={props.profile} links={links} />,
         branding: <BrandingStep step={step} branding={props.branding} links={links} />,
         school_type: <TypeStep step={step} schoolType={props.schoolType} links={links} />,
-        structure: <StructureStep step={step} levels={props.levels} links={links} />,
+        structure: <StructureStep step={step} levels={props.levels} links={links} schoolType={props.schoolType} />,
         academic_year: <YearStep step={step} academicYear={props.academicYear} links={links} />,
         departments: <DepartmentsStep step={step} departments={props.departments} links={links} />,
         classes: <ClassesStep step={step} classes={props.classes} levels={props.levels} links={links} />,

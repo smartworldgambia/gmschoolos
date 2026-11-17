@@ -15,6 +15,7 @@ use App\Models\Subject;
 use App\Models\Term;
 use App\Models\TimetableSlot;
 use App\Models\User;
+use App\Support\SchoolCategoryCatalog;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -141,6 +142,14 @@ class SetupWizard
     {
         return $this->tenant->runForSchool($school, function () use ($school, $name, $code) {
             $name = trim($name);
+            $code = $code !== null && trim($code) !== '' ? trim($code) : null;
+
+            if (! SchoolCategoryCatalog::isLevelAllowed($school, $name, $code)) {
+                throw ValidationException::withMessages([
+                    'name' => 'This level is outside your school category. Request a category upgrade to add it.',
+                    'code' => 'Use a level code from your enrolled school categories, or request an upgrade.',
+                ]);
+            }
 
             if (Level::query()->where('school_id', $school->id)->whereRaw('lower(name) = ?', [mb_strtolower($name)])->exists()) {
                 throw ValidationException::withMessages(['name' => 'This level already exists.']);
@@ -151,7 +160,7 @@ class SetupWizard
             return Level::query()->create([
                 'school_id' => $school->id,
                 'name' => $name,
-                'code' => $code ? trim($code) : null,
+                'code' => $code,
                 'sort_order' => $order + 1,
             ]);
         });

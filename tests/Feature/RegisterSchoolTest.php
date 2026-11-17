@@ -62,6 +62,10 @@ class RegisterSchoolTest extends TestCase
         $school = School::query()->where('slug', 'newhorizon')->firstOrFail();
         $this->assertSame('Building strong foundations for lifelong learning', $school->tagline);
         $this->assertSame('primary', $school->settings['landing']['template'] ?? null);
+        $this->assertSame(['primary'], $school->enabled_categories);
+
+        // HTTP lifecycle clears tenant context; re-enter platform mode before inspecting tenant rows.
+        app(TenantContext::class)->enterPlatformMode();
         $this->assertSame(6, Level::query()->where('school_id', $school->id)->count());
         $this->assertDatabaseHas('levels', ['school_id' => $school->id, 'code' => 'g1', 'name' => 'Grade 1']);
         $this->assertTrue(

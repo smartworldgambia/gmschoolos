@@ -17,7 +17,9 @@ use App\Services\Onboarding\SetupWizard;
 use App\Services\Onboarding\StaffInvitationService;
 use App\Services\Scale\CacheTuner;
 use App\Services\School\SchoolDomainService;
+use App\Models\SchoolCategoryUpgradeRequest;
 use App\Support\Money;
+use App\Support\SchoolCategoryCatalog;
 use App\Support\SchoolTypes;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
@@ -88,6 +90,17 @@ class SetupController extends Controller
             ],
             'schoolType' => [
                 'category' => $school->category,
+                'enabled_categories' => SchoolCategoryCatalog::enabledCategories($school),
+                'pack_locked' => SchoolCategoryCatalog::isPackLocked($school),
+                'upgradeable_categories' => SchoolCategoryCatalog::upgradeableCategories($school),
+                'allowed_levels' => SchoolCategoryCatalog::isPackLocked($school)
+                    ? SchoolCategoryCatalog::levelsForCategories(SchoolCategoryCatalog::enabledCategories($school))
+                    : null,
+                'pending_upgrade' => SchoolCategoryUpgradeRequest::query()
+                    ->where('school_id', $school->id)
+                    ->where('status', SchoolCategoryUpgradeRequest::PENDING)
+                    ->exists(),
+                'billing_url' => route('billing.index'),
                 'annual_price' => $subscription?->annual_amount !== null
                     ? Money::formatCurrency($subscription->annual_amount, $subscription->currency)
                     : null,

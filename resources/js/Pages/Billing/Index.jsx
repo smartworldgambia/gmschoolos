@@ -4,7 +4,7 @@ import PageHeader from '@/Components/SchoolOS/PageHeader';
 import StatusBadge from '@/Components/SchoolOS/StatusBadge';
 import AppShell from '@/Layouts/AppShell';
 import InputError from '@/Components/InputError';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 function Fact({ label, children }) {
@@ -126,6 +126,99 @@ function SubscribePanel({ billing, methods, openPayment, canManage, l }) {
     );
 }
 
+function CategoryUpgradePanel({ categoryUpgrade, canManage, l }) {
+    const { t } = l;
+    const upgradeable = categoryUpgrade?.upgradeable ?? [];
+    const enabled = categoryUpgrade?.enabled ?? [];
+    const pending = categoryUpgrade?.pending;
+    const form = useForm({ categories: [], reason: '' });
+
+    if (!categoryUpgrade?.pack_locked) {
+        return null;
+    }
+
+    function toggle(cat) {
+        const next = form.data.categories.includes(cat)
+            ? form.data.categories.filter((c) => c !== cat)
+            : [...form.data.categories, cat];
+        form.setData('categories', next);
+    }
+
+    function submit(e) {
+        e.preventDefault();
+        form.post(route('billing.category-upgrade.store'), { preserveScroll: true });
+    }
+
+    return (
+        <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="text-base font-semibold text-navy">{t('billing.upgrade.title')}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{t('billing.upgrade.help')}</p>
+            <p className="mt-3 text-sm text-slate-600">
+                <span className="font-semibold text-navy">{t('billing.upgrade.enabled')}: </span>
+                {enabled.length ? enabled.map((c) => l.schoolType(c)).join(' · ') : t('billing.none')}
+            </p>
+
+            {pending ? (
+                <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">{t('billing.upgrade.pending')}</p>
+                    <p className="mt-1">
+                        {t('billing.upgrade.pendingBody', {
+                            categories: (pending.requested ?? []).map((c) => l.schoolType(c)).join(', '),
+                            type: l.schoolType(pending.target_billing_type),
+                        })}
+                    </p>
+                    {canManage ? (
+                        <button
+                            type="button"
+                            className="btn-outline mt-3 whitespace-nowrap text-sm"
+                            onClick={() => router.post(route('billing.category-upgrade.cancel'), {}, { preserveScroll: true })}
+                        >
+                            {t('billing.upgrade.cancel')}
+                        </button>
+                    ) : null}
+                </div>
+            ) : upgradeable.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">{t('billing.upgrade.none')}</p>
+            ) : (
+                <form onSubmit={submit} className="mt-4">
+                    <fieldset disabled={!canManage} className="grid gap-2 sm:grid-cols-2">
+                        <legend className="mb-2 text-sm font-semibold text-navy">{t('billing.upgrade.select')}</legend>
+                        {upgradeable.map((cat) => (
+                            <label key={cat} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={form.data.categories.includes(cat)}
+                                    onChange={() => toggle(cat)}
+                                    className="rounded text-teal focus:ring-teal"
+                                />
+                                <span>{l.schoolType(cat)}</span>
+                            </label>
+                        ))}
+                    </fieldset>
+                    <label className="mt-4 block text-sm text-slate-600">
+                        {t('billing.upgrade.reason')}
+                        <textarea
+                            className="ui-input mt-1"
+                            rows={3}
+                            value={form.data.reason}
+                            disabled={!canManage}
+                            onChange={(e) => form.setData('reason', e.target.value)}
+                        />
+                    </label>
+                    <InputError message={form.errors.categories} className="mt-2" />
+                    <button
+                        type="submit"
+                        disabled={!canManage || form.processing || form.data.categories.length === 0}
+                        className="btn-teal mt-4 whitespace-nowrap text-sm disabled:opacity-50"
+                    >
+                        {t('billing.upgrade.submit')}
+                    </button>
+                </form>
+            )}
+        </section>
+    );
+}
+
 export default function Index({
     billing = null,
     payments = [],
@@ -133,6 +226,7 @@ export default function Index({
     openPayment = null,
     canManage = false,
     support = {},
+    categoryUpgrade = null,
     nav = [],
     user,
     school,
@@ -227,6 +321,7 @@ export default function Index({
                     </section>
 
                     <SubscribePanel billing={billing} methods={methods} openPayment={openPayment} canManage={canManage} l={l} />
+                    <CategoryUpgradePanel categoryUpgrade={categoryUpgrade} canManage={canManage} l={l} />
 
                     <div className="mt-6 grid gap-6 lg:grid-cols-3">
                         <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6 lg:col-span-2">

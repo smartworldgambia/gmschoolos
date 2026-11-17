@@ -14,6 +14,7 @@ export default function Show({
     usageSnapshots = [],
     types = [],
     payments = [],
+    categoryUpgrades = [],
     updateUrls = {},
     nav = [],
     user,
@@ -32,6 +33,7 @@ export default function Show({
     const typeForm = useForm({
         school_type: subscription?.school_type ?? types[0] ?? 'primary',
     });
+    const reviewForm = useForm({ review_note: '' });
 
     const payForm = useForm({
         method: 'cash',
@@ -228,6 +230,66 @@ export default function Show({
                                     {t('platformSchool.sub.saveType')}
                                 </button>
                             </form>
+
+                            {(tenant.enabled_categories ?? []).length ? (
+                                <p className="mt-4 text-xs text-slate-500">
+                                    {t('billing.upgrade.enabled')}:{' '}
+                                    {(tenant.enabled_categories ?? []).map((c) => l.schoolType(c)).join(' · ')}
+                                </p>
+                            ) : null}
+
+                            <div className="mt-5 border-t border-slate-100 pt-4">
+                                <h3 className="text-sm font-semibold text-navy">{t('billing.upgrade.requests')}</h3>
+                                {categoryUpgrades.length === 0 ? (
+                                    <p className="mt-2 text-sm text-slate-500">{t('billing.upgrade.emptyRequests')}</p>
+                                ) : (
+                                    <ul className="mt-3 space-y-3">
+                                        {categoryUpgrades.map((req) => (
+                                            <li key={req.id} className="rounded-xl border border-slate-100 p-3 text-sm">
+                                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                                    <StatusBadge
+                                                        status={req.status}
+                                                        label={t(`billing.upgrade.status.${req.status}`)}
+                                                    />
+                                                    <span className="text-xs text-slate-500" dir="ltr">
+                                                        {req.created_at}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-2 text-slate-600">
+                                                    {(req.requested_categories ?? []).map((c) => l.schoolType(c)).join(', ')}
+                                                    {' → '}
+                                                    {l.schoolType(req.target_billing_type)}
+                                                </p>
+                                                {req.reason ? <p className="mt-1 text-xs text-slate-500">{req.reason}</p> : null}
+                                                {req.status === 'pending' ? (
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            className="btn-teal whitespace-nowrap text-xs"
+                                                            disabled={reviewForm.processing}
+                                                            onClick={() =>
+                                                                reviewForm.post(req.approve_url, { preserveScroll: true })
+                                                            }
+                                                        >
+                                                            {t('billing.upgrade.approve')}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-outline whitespace-nowrap text-xs"
+                                                            disabled={reviewForm.processing}
+                                                            onClick={() =>
+                                                                reviewForm.post(req.reject_url, { preserveScroll: true })
+                                                            }
+                                                        >
+                                                            {t('billing.upgrade.reject')}
+                                                        </button>
+                                                    </div>
+                                                ) : null}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
                         </>
                     )}
                 </div>
