@@ -6,6 +6,7 @@ use App\Models\Level;
 use App\Models\NewsPost;
 use App\Models\School;
 use App\Services\Scale\CacheTuner;
+use App\Support\SchoolCategoryCatalog;
 use Illuminate\Support\Str;
 
 /**
@@ -61,6 +62,33 @@ class SchoolLandingProvisioner
     }
 
     /**
+     * Add academic levels for newly entitled categories without removing existing ones.
+     *
+     * @param  list<string>  $categories
+     */
+    public function seedLevelsForCategories(School $school, array $categories): void
+    {
+        $levels = SchoolCategoryCatalog::levelsForCategories($categories);
+        if ($levels === []) {
+            return;
+        }
+
+        $start = (int) Level::query()->where('school_id', $school->id)->max('sort_order');
+        foreach ($levels as $index => $level) {
+            Level::query()->firstOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'code' => $level['code'],
+                ],
+                [
+                    'name' => $level['name'],
+                    'sort_order' => $start + $index + 1,
+                ]
+            );
+        }
+    }
+
+    /**
      * @return array{
      *   key: string,
      *   label: string,
@@ -96,8 +124,9 @@ class SchoolLandingProvisioner
      */
     protected function levelCardsFor(array $template): array
     {
+        $source = $template['level_cards'] ?? $template['levels'] ?? [];
         $cards = [];
-        foreach ($template['levels'] as $level) {
+        foreach ($source as $level) {
             $cards[] = [
                 'name' => $level['name'],
                 'code' => $level['code'],
@@ -297,26 +326,7 @@ class SchoolLandingProvisioner
                 'primary_color' => '#1A2B56',
                 'accent_color' => '#1683F8',
                 'features' => $features,
-                'levels' => [
-                    [
-                        'name' => 'Baby Class',
-                        'code' => 'baby',
-                        'description' => 'Gentle care and sensory play for our youngest children.',
-                        'image' => '/images/marketing/hero-primary.jpg',
-                    ],
-                    [
-                        'name' => 'Toddler',
-                        'code' => 'toddler',
-                        'description' => 'Discovery, language, and social skills through guided play.',
-                        'image' => '/images/marketing/hero-classroom.jpg',
-                    ],
-                    [
-                        'name' => 'Reception',
-                        'code' => 'reception',
-                        'description' => 'School readiness with literacy, numeracy, and confidence.',
-                        'image' => '/images/marketing/hero-students.jpg',
-                    ],
-                ],
+                'levels' => SchoolCategoryCatalog::levelPack('nursery'),
                 'news_title' => 'Welcome to our new school website',
                 'news_excerpt' => 'Families can now learn about our nursery programmes and admissions online.',
                 'news_body' => 'We are pleased to launch the public website for {name}. Explore our early years groups, learn about our approach, and apply for admission when you are ready.',
@@ -337,44 +347,7 @@ class SchoolLandingProvisioner
                 'primary_color' => '#1A2B56',
                 'accent_color' => '#1683F8',
                 'features' => $features,
-                'levels' => [
-                    [
-                        'name' => 'Grade 1',
-                        'code' => 'g1',
-                        'description' => 'First steps in literacy, numeracy, and classroom routines.',
-                        'image' => '/images/marketing/hero-primary.jpg',
-                    ],
-                    [
-                        'name' => 'Grade 2',
-                        'code' => 'g2',
-                        'description' => 'Growing confidence in reading, writing, and problem-solving.',
-                        'image' => '/images/marketing/hero-classroom.jpg',
-                    ],
-                    [
-                        'name' => 'Grade 3',
-                        'code' => 'g3',
-                        'description' => 'Deeper skills across core subjects with guided discovery.',
-                        'image' => '/images/marketing/hero-students.jpg',
-                    ],
-                    [
-                        'name' => 'Grade 4',
-                        'code' => 'g4',
-                        'description' => 'Independent learning habits and stronger academic focus.',
-                        'image' => '/images/marketing/hero-primary.jpg',
-                    ],
-                    [
-                        'name' => 'Grade 5',
-                        'code' => 'g5',
-                        'description' => 'Preparation for upper primary challenges and leadership.',
-                        'image' => '/images/marketing/hero-classroom.jpg',
-                    ],
-                    [
-                        'name' => 'Grade 6',
-                        'code' => 'g6',
-                        'description' => 'Ready for secondary pathways with solid foundations.',
-                        'image' => '/images/marketing/hero-students.jpg',
-                    ],
-                ],
+                'levels' => SchoolCategoryCatalog::levelPack('primary'),
                 'news_title' => 'Welcome to our new school website',
                 'news_excerpt' => 'Discover our primary programmes, school life, and how to apply.',
                 'news_body' => 'The public website for {name} is now live. Browse our primary grades, read about our school, and start an admissions enquiry online.',
@@ -395,26 +368,7 @@ class SchoolLandingProvisioner
                 'primary_color' => '#1A2B56',
                 'accent_color' => '#1683F8',
                 'features' => $features,
-                'levels' => [
-                    [
-                        'name' => 'Form 1',
-                        'code' => 'f1',
-                        'description' => 'A confident start to secondary learning and study habits.',
-                        'image' => '/images/marketing/hero-classroom.jpg',
-                    ],
-                    [
-                        'name' => 'Form 2',
-                        'code' => 'f2',
-                        'description' => 'Broader subject depth with co-curricular growth.',
-                        'image' => '/images/marketing/hero-students.jpg',
-                    ],
-                    [
-                        'name' => 'Form 3',
-                        'code' => 'f3',
-                        'description' => 'Exam readiness and pathways to senior secondary.',
-                        'image' => '/images/marketing/hero-primary.jpg',
-                    ],
-                ],
+                'levels' => SchoolCategoryCatalog::levelPack('basic_secondary'),
                 'news_title' => 'Welcome to our new school website',
                 'news_excerpt' => 'Parents and students can explore our basic secondary offerings online.',
                 'news_body' => "{name}'s public website is live. View our forms, learn about school life, and apply for admission through Gambia SchoolOS.",
@@ -435,26 +389,7 @@ class SchoolLandingProvisioner
                 'primary_color' => '#1A2B56',
                 'accent_color' => '#1683F8',
                 'features' => $features,
-                'levels' => [
-                    [
-                        'name' => 'Form 4',
-                        'code' => 'f4',
-                        'description' => 'Subject streams that open future academic pathways.',
-                        'image' => '/images/marketing/hero-students.jpg',
-                    ],
-                    [
-                        'name' => 'Form 5',
-                        'code' => 'f5',
-                        'description' => 'Focused exam preparation with mentoring support.',
-                        'image' => '/images/marketing/hero-classroom.jpg',
-                    ],
-                    [
-                        'name' => 'Form 6',
-                        'code' => 'f6',
-                        'description' => 'Advanced study preparing learners for tertiary life.',
-                        'image' => '/images/marketing/hero-primary.jpg',
-                    ],
-                ],
+                'levels' => SchoolCategoryCatalog::levelPack('senior_secondary'),
                 'news_title' => 'Welcome to our new school website',
                 'news_excerpt' => 'Explore senior secondary streams and admissions on our new site.',
                 'news_body' => 'Welcome to the new public website for {name}. Learn about our senior forms, school values, and how to apply for a place.',
@@ -494,7 +429,9 @@ class SchoolLandingProvisioner
                 'primary_color' => '#1A2B56',
                 'accent_color' => '#1683F8',
                 'features' => $features,
-                'levels' => [
+                // Academic structure = full exclusive packs; landing cards stay stage summaries.
+                'levels' => SchoolCategoryCatalog::levelsForCategories(SchoolCategoryCatalog::EXCLUSIVE),
+                'level_cards' => [
                     [
                         'name' => 'Nursery',
                         'code' => 'nursery',

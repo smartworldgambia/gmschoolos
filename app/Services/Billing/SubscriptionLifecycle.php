@@ -409,20 +409,32 @@ class SubscriptionLifecycle
 
     // ------------------------------------------------------------------ authorised classification change
 
-    /** Changing school type changes the fee: only an authorised operator may do it (audited). */
-    public function changeSchoolType(School $school, string $newType, User $actor): SchoolSubscription
+    /**
+     * Changing school type changes the fee: only an authorised operator may do it (audited).
+     *
+     * @param  list<string>|null  $enabledCategories  when null, defaults from the billing type
+     */
+    public function changeSchoolType(School $school, string $newType, User $actor, ?array $enabledCategories = null): SchoolSubscription
     {
         if (! SchoolTypes::isValid($newType)) {
             throw new InvalidArgumentException('Unknown school type.');
         }
 
-        return $this->tenant->runForSchool($school, function () use ($school, $newType, $actor) {
+        return $this->tenant->runForSchool($school, function () use ($school, $newType, $actor, $enabledCategories) {
             $subscription = SchoolSubscription::query()->where('school_id', $school->id)->firstOrFail();
             $old = $subscription->school_type;
 
-            $school->forceFill(['category' => $newType])->save();
+            $school->forceFill([
+                'category' => $newType,
+                'enabled_categories' => $enabledCategories
+                    ?? \App\Support\SchoolCategoryCatalog::defaultEnabledCategories($newType),
+            ])->save();
             $subscription->forceFill(['school_type' => $newType])->save();
-            $this->event($subscription, 'school_type_changed', $actor, ['from' => $old, 'to' => $newType]);
+            $this->event($subscription, 'school_type_changed', $actor, [
+                'from' => $old,
+                'to' => $newType,
+                'enabled_categories' => $school->enabled_categories,
+            ]);
 
             return $subscription;
         });

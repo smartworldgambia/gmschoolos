@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class School extends Model
 {
     protected $fillable = [
-        'name', 'slug', 'category', 'country', 'region', 'district', 'registration_number', 'address', 'phone', 'email',
+        'name', 'slug', 'category', 'enabled_categories', 'country', 'region', 'district', 'registration_number', 'address', 'phone', 'email',
         'billing_email', 'logo_path', 'primary_color', 'accent_color', 'tagline', 'about',
         'status', 'isolation_tier', 'db_connection', 'partition_key', 'isolation_reviewed_at',
         'suspended_at', 'website_published', 'settings', 'terms_accepted_at', 'terms_version', 'setup_completed_at',
@@ -20,11 +20,17 @@ class School extends Model
         return [
             'website_published' => 'boolean',
             'settings' => 'array',
+            'enabled_categories' => 'array',
             'suspended_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'setup_completed_at' => 'datetime',
             'isolation_reviewed_at' => 'datetime',
         ];
+    }
+
+    public function categoryUpgradeRequests(): HasMany
+    {
+        return $this->hasMany(SchoolCategoryUpgradeRequest::class);
     }
 
     public function domains(): HasMany

@@ -68,8 +68,14 @@ class SchoolLandingProvisionerTest extends TestCase
         $provisioned = app(SchoolLandingProvisioner::class)->provision($school);
 
         $this->assertSame('combined', $provisioned->settings['landing']['template']);
-        $this->assertSame(4, Level::query()->where('school_id', $school->id)->count());
+        // Combined academic structure is the union of the four exclusive packs; landing cards stay stage summaries.
+        $this->assertSame(15, Level::query()->where('school_id', $school->id)->count());
+        $this->assertCount(4, $provisioned->settings['landing']['level_cards'] ?? []);
         $this->assertCount(3, $provisioned->settings['landing']['hero_slides'] ?? []);
+        $this->assertDatabaseHas('levels', ['school_id' => $school->id, 'code' => 'baby']);
+        $this->assertDatabaseHas('levels', ['school_id' => $school->id, 'code' => 'g1']);
+        $this->assertDatabaseHas('levels', ['school_id' => $school->id, 'code' => 'f1']);
+        $this->assertDatabaseHas('levels', ['school_id' => $school->id, 'code' => 'f4']);
         $this->assertSame(
             6,
             NewsPost::query()->where('school_id', $school->id)->whereNotNull('published_at')->count()

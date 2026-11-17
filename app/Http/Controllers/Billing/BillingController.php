@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Billing;
 use App\Http\Controllers\Concerns\SharesSchoolShell;
 use App\Http\Controllers\Controller;
 use App\Models\BillingPayment;
+use App\Models\SchoolCategoryUpgradeRequest;
 use App\Services\Billing\PaymentService;
 use App\Services\Billing\SubscriptionLifecycle;
 use App\Support\Money;
+use App\Support\SchoolCategoryCatalog;
 use App\Support\TenantContext;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -66,6 +68,12 @@ class BillingController extends Controller
             })
             ->values();
 
+        $pendingUpgrade = SchoolCategoryUpgradeRequest::query()
+            ->where('school_id', $school->id)
+            ->where('status', SchoolCategoryUpgradeRequest::PENDING)
+            ->latest('id')
+            ->first();
+
         return Inertia::render('Billing/Index', array_merge($this->shellProps(), [
             'billing' => $state,
             'payments' => $paymentRows,
@@ -80,6 +88,18 @@ class BillingController extends Controller
             'support' => [
                 'email' => config('schoolos.marketing.support_email'),
                 'phone' => config('schoolos.marketing.phone'),
+            ],
+            'categoryUpgrade' => [
+                'enabled' => SchoolCategoryCatalog::enabledCategories($school),
+                'upgradeable' => SchoolCategoryCatalog::upgradeableCategories($school),
+                'pack_locked' => SchoolCategoryCatalog::isPackLocked($school),
+                'pending' => $pendingUpgrade ? [
+                    'id' => $pendingUpgrade->id,
+                    'requested' => $pendingUpgrade->requested_categories,
+                    'target_billing_type' => $pendingUpgrade->target_billing_type,
+                    'reason' => $pendingUpgrade->reason,
+                    'created_at' => $pendingUpgrade->created_at?->toDateString(),
+                ] : null,
             ],
         ]));
     }

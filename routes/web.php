@@ -115,6 +115,12 @@ Route::middleware(['auth', 'verified', 'platform.admin'])->prefix('platform')->n
     Route::patch('/schools/{school}', [PlatformSchoolController::class, 'update'])->middleware('permission:platform.schools.manage')->name('schools.update');
     Route::post('/schools/{school}/payments', [PlatformBillingController::class, 'recordPayment'])->middleware('permission:platform.payments.verify')->name('schools.payments.store');
     Route::patch('/schools/{school}/type', [PlatformBillingController::class, 'updateType'])->middleware('permission:platform.subscriptions.manage')->name('schools.type.update');
+    Route::post('/schools/{school}/category-upgrades/{upgrade}/approve', [\App\Http\Controllers\Platform\CategoryUpgradeController::class, 'approve'])
+        ->middleware('permission:platform.subscriptions.manage')
+        ->name('schools.category-upgrades.approve');
+    Route::post('/schools/{school}/category-upgrades/{upgrade}/reject', [\App\Http\Controllers\Platform\CategoryUpgradeController::class, 'reject'])
+        ->middleware('permission:platform.subscriptions.manage')
+        ->name('schools.category-upgrades.reject');
     Route::patch('/schools/{school}/quota', [PlatformSchoolController::class, 'updateQuota'])->middleware('permission:platform.schools.manage')->name('schools.quota');
     Route::post('/schools/{school}/domains', [PlatformSchoolController::class, 'storeDomain'])->middleware('permission:platform.schools.manage')->name('schools.domains.store');
     Route::post('/schools/{school}/suspend', [PlatformSchoolController::class, 'suspend'])->middleware('permission:platform.schools.manage')->name('schools.suspend');
@@ -257,6 +263,12 @@ Route::middleware(['auth', 'verified', 'identify.tenant', 'school.context'])->gr
     Route::get('/exports/{export}/download', [ExportController::class, 'download'])->middleware('permission:reports.export')->name('exports.download');
 
     Route::get('/billing', [SchoolBillingController::class, 'index'])->middleware('permission:subscriptions.view')->name('billing.index');
+    Route::post('/billing/category-upgrade', [\App\Http\Controllers\Billing\CategoryUpgradeController::class, 'store'])
+        ->middleware(['permission:subscriptions.manage', 'throttle:10,1'])
+        ->name('billing.category-upgrade.store');
+    Route::post('/billing/category-upgrade/cancel', [\App\Http\Controllers\Billing\CategoryUpgradeController::class, 'cancel'])
+        ->middleware(['permission:subscriptions.manage', 'throttle:10,1'])
+        ->name('billing.category-upgrade.cancel');
     Route::post('/billing/payments', [SchoolPaymentController::class, 'store'])->middleware(['permission:subscriptions.manage', 'throttle:20,1'])->name('billing.payments.store');
     Route::get('/billing/payments/{reference}', [SchoolPaymentController::class, 'show'])->middleware('permission:subscriptions.view')->name('billing.payments.show');
     Route::post('/billing/payments/{reference}/evidence', [SchoolPaymentController::class, 'evidence'])->middleware(['permission:subscriptions.manage', 'throttle:10,1'])->name('billing.payments.evidence');
