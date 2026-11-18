@@ -141,6 +141,7 @@ class SmartworldNurserySeeder extends Seeder
         }
 
         $start = now();
+        // school_subscriptions has suspended_at / status — there is no cancelled_at column.
         $existing->forceFill([
             'school_type' => 'nursery',
             'status' => SchoolSubscription::TRIAL,
@@ -150,7 +151,7 @@ class SmartworldNurserySeeder extends Seeder
             'trial_starts_at' => $existing->trial_starts_at ?? $start,
             'trial_ends_at' => $start->copy()->addDays($days),
             'suspended_at' => null,
-            'cancelled_at' => null,
+            'expired_at' => null,
         ])->save();
     }
 
