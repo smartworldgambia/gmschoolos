@@ -104,6 +104,16 @@ final class DemoLoginCatalog
             }
         }
 
+        if ($slug === 'smartworld') {
+            $rows['school_admin']['name'] = 'Awa Jallow';
+            $rows['headteacher']['name'] = 'Haddy Njie';
+            $rows['teacher']['name'] = 'Fatou Jallow';
+            $rows['teacher_b']['name'] = 'Musa Touray';
+            $rows['teacher_c']['name'] = 'Awa Camara';
+            $rows['student']['name'] = 'Aminata Jallow';
+            $rows['parent']['name'] = 'Parent Jallow';
+        }
+
         foreach ($rows as &$row) {
             $row['email'] = $row['local'].'@'.$domain;
         }
