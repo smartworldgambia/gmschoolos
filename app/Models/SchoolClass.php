@@ -11,7 +11,17 @@ class SchoolClass extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'level_id', 'name', 'stream', 'class_teacher_id', 'capacity'];
+    protected $fillable = [
+        'school_id', 'level_id', 'name', 'stream', 'class_teacher_id', 'capacity',
+        'teaching_arrangement', 'learning_centres',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'learning_centres' => 'array',
+        ];
+    }
 
     public function level(): BelongsTo
     {
@@ -21,6 +31,11 @@ class SchoolClass extends Model
     public function classTeacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'class_teacher_id');
+    }
+
+    public function educators(): HasMany
+    {
+        return $this->hasMany(ClassEducator::class, 'school_class_id');
     }
 
     public function classSubjects(): HasMany

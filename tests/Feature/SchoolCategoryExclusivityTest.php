@@ -69,10 +69,11 @@ class SchoolCategoryExclusivityTest extends TestCase
 
         $this->assertSame(['nursery'], SchoolCategoryCatalog::enabledCategories($school));
         $this->assertTrue(SchoolCategoryCatalog::isPackLocked($school));
-        $this->assertSame(['baby', 'toddler', 'reception'], SchoolCategoryCatalog::allowedLevelCodes($school));
-        $this->assertSame(3, Level::query()->where('school_id', $school->id)->count());
+        $this->assertSame(['baby', 'toddler', 'n1', 'n2', 'reception'], SchoolCategoryCatalog::allowedLevelCodes($school));
+        $this->assertSame(5, Level::query()->where('school_id', $school->id)->count());
         $this->assertFalse(SchoolCategoryCatalog::isLevelAllowed($school, 'Grade 1', 'g1'));
         $this->assertTrue(SchoolCategoryCatalog::isLevelAllowed($school, 'Reception', 'reception'));
+        $this->assertTrue(SchoolCategoryCatalog::isLevelAllowed($school, 'Nursery 1', 'n1'));
     }
 
     public function test_setup_rejects_out_of_pack_level(): void

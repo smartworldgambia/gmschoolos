@@ -5,8 +5,10 @@ namespace App\Services\School;
 use App\Models\Level;
 use App\Models\NewsPost;
 use App\Models\School;
+use App\Models\Subject;
 use App\Services\Scale\CacheTuner;
 use App\Support\SchoolCategoryCatalog;
+use App\Support\SchoolTypes;
 use Illuminate\Support\Str;
 
 /**
@@ -54,11 +56,32 @@ class SchoolLandingProvisioner
         ])->save();
 
         $this->seedLevels($school, $template['levels']);
+        if (SchoolTypes::normalise((string) ($school->category ?? '')) === 'nursery') {
+            $this->seedNurseryLearningDomains($school);
+        }
         $this->seedNewsPosts($school, $template);
 
         $this->cache->forgetPublicSite($school->id);
 
         return $school->fresh();
+    }
+
+    /** Idempotent: create proposed ECD learning domains as Subjects for nursery schools. */
+    public function seedNurseryLearningDomains(School $school): void
+    {
+        foreach (SchoolCategoryCatalog::nurseryLearningDomains() as $domain) {
+            Subject::query()->updateOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'code' => $domain['code'],
+                ],
+                [
+                    'name' => $domain['name'],
+                    'is_specialist' => false,
+                    'domain_kind' => 'learning_domain',
+                ]
+            );
+        }
     }
 
     /**
@@ -80,10 +103,7 @@ class SchoolLandingProvisioner
                     'school_id' => $school->id,
                     'code' => $level['code'],
                 ],
-                [
-                    'name' => $level['name'],
-                    'sort_order' => $start + $index + 1,
-                ]
+                $this->levelAttributes($level, $start + $index + 1)
             );
         }
     }
@@ -475,12 +495,26 @@ class SchoolLandingProvisioner
                     'school_id' => $school->id,
                     'code' => $level['code'],
                 ],
-                [
-                    'name' => $level['name'],
-                    'sort_order' => $index + 1,
-                ]
+                $this->levelAttributes($level, $index + 1)
             );
         }
+    }
+
+    /**
+     * @param  array{name: string, code: string, description?: string, age_min_months?: int, age_max_months?: int, teaching_arrangement?: string}  $level
+     * @return array<string, mixed>
+     */
+    protected function levelAttributes(array $level, int $sortOrder): array
+    {
+        return array_filter([
+            'name' => $level['name'],
+            'sort_order' => $sortOrder,
+            'description' => $level['description'] ?? null,
+            'age_min_months' => $level['age_min_months'] ?? null,
+            'age_max_months' => $level['age_max_months'] ?? null,
+            'teaching_arrangement' => $level['teaching_arrangement'] ?? null,
+            'is_active' => true,
+        ], static fn ($v) => $v !== null);
     }
 
     /**
