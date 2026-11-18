@@ -42,11 +42,18 @@ class SmartworldNurserySeederTest extends TestCase
 
         $this->assertSame(5, Level::query()->where('school_id', $school->id)->count());
         $this->assertSame(
+            ['baby', 'toddler', 'n1', 'n2', 'reception'],
+            Level::query()->where('school_id', $school->id)->orderBy('sort_order')->pluck('code')->all()
+        );
+        $this->assertSame(
             7,
             Subject::query()->where('school_id', $school->id)->where('domain_kind', 'learning_domain')->count()
         );
         $this->assertSame(5, SchoolClass::query()->where('school_id', $school->id)->count());
-        $this->assertGreaterThanOrEqual(10, Student::query()->where('school_id', $school->id)->count());
+        $this->assertSame(14, Student::query()->where('school_id', $school->id)->where('status', 'active')->count());
+        $this->assertFalse(
+            Level::query()->where('school_id', $school->id)->whereIn('code', ['G1', 'g1', 'NUR', 'SSS'])->exists()
+        );
         $this->assertTrue(
             ClassEducator::query()->where('school_id', $school->id)->where('role', ClassEducator::LEAD)->exists()
         );
