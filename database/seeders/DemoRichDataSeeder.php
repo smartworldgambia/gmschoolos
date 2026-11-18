@@ -157,6 +157,13 @@ class DemoRichDataSeeder extends Seeder
         }
 
         foreach ($schools as $school) {
+            // Exclusive nursery tenants keep ECD packs; skip the combined Grade 1–12 rich pack.
+            if (\App\Support\SchoolTypes::normalise((string) ($school->category ?? '')) === 'nursery') {
+                app(DemoLoginProvisioner::class)->ensureSchool($school);
+                $this->command?->info('Skipped combined rich pack for nursery school: '.$school->slug);
+                continue;
+            }
+
             app(TenantContext::class)->set($school);
             $this->seedSchool($school);
             try {
