@@ -38,15 +38,29 @@ class SchoolLandingProvisionerTest extends TestCase
         $this->assertSame('#1A2B56', $provisioned->primary_color);
         $this->assertSame('#1683F8', $provisioned->accent_color);
         $this->assertNotEmpty($provisioned->settings['landing']['features'] ?? []);
-        $this->assertCount(3, $provisioned->settings['landing']['level_cards'] ?? []);
+        $this->assertCount(5, $provisioned->settings['landing']['level_cards'] ?? []);
         $this->assertCount(3, $provisioned->settings['landing']['hero_slides'] ?? []);
         $this->assertStringContainsString('Little Stars Nursery', (string) $provisioned->about);
-        $this->assertSame(3, Level::query()->where('school_id', $school->id)->count());
+        $this->assertSame(5, Level::query()->where('school_id', $school->id)->count());
         $this->assertDatabaseHas('levels', [
             'school_id' => $school->id,
             'code' => 'baby',
             'name' => 'Baby Class',
+            'age_min_months' => 24,
+            'age_max_months' => 36,
         ]);
+        $this->assertDatabaseHas('levels', [
+            'school_id' => $school->id,
+            'code' => 'n1',
+            'name' => 'Nursery 1',
+        ]);
+        $this->assertSame(
+            7,
+            \App\Models\Subject::query()
+                ->where('school_id', $school->id)
+                ->where('domain_kind', 'learning_domain')
+                ->count()
+        );
         $this->assertSame(
             6,
             NewsPost::query()->where('school_id', $school->id)->whereNotNull('published_at')->count()
@@ -69,7 +83,7 @@ class SchoolLandingProvisionerTest extends TestCase
 
         $this->assertSame('combined', $provisioned->settings['landing']['template']);
         // Combined academic structure is the union of the four exclusive packs; landing cards stay stage summaries.
-        $this->assertSame(15, Level::query()->where('school_id', $school->id)->count());
+        $this->assertSame(17, Level::query()->where('school_id', $school->id)->count());
         $this->assertCount(4, $provisioned->settings['landing']['level_cards'] ?? []);
         $this->assertCount(3, $provisioned->settings['landing']['hero_slides'] ?? []);
         $this->assertDatabaseHas('levels', ['school_id' => $school->id, 'code' => 'baby']);

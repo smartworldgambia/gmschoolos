@@ -6,6 +6,7 @@ use App\Exceptions\AcademicRuleException;
 use App\Http\Controllers\Concerns\HandlesAcademicRules;
 use App\Http\Controllers\Concerns\SharesSchoolShell;
 use App\Http\Controllers\Controller;
+use App\Models\ClassEducator;
 use App\Models\Department;
 use App\Models\Level;
 use App\Models\SchoolClass;
@@ -13,6 +14,7 @@ use App\Models\Subject;
 use App\Services\Academics\HomeroomService;
 use App\Services\Lms\CourseService;
 use App\Services\Onboarding\SetupWizard;
+use App\Support\SchoolTypes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,9 +32,11 @@ class AcademicController extends Controller
     public function index(): Response
     {
         $user = auth()->user();
+        $school = $user->school;
+        $academicBand = SchoolTypes::normalise((string) ($school?->category ?? '')) === 'nursery' ? 'nursery' : 'standard';
 
         $classes = SchoolClass::query()
-            ->with(['level', 'classTeacher'])
+            ->with(['level', 'classTeacher', 'educators.user:id,name'])
             ->withCount(['students' => fn ($q) => $q->where('status', 'active')])
             ->orderBy('level_id')->orderBy('name')
             ->get()
@@ -46,6 +50,14 @@ class AcademicController extends Controller
                 'class_teacher_id' => $class->class_teacher_id,
                 'students_count' => $class->students_count,
                 'capacity' => $class->capacity,
+                'teaching_arrangement' => $class->teaching_arrangement ?: $class->level?->teaching_arrangement,
+                'learning_centres' => $class->learning_centres ?? [],
+                'educators' => $class->educators->map(fn (ClassEducator $e) => [
+                    'id' => $e->id,
+                    'user_id' => $e->user_id,
+                    'name' => $e->user?->name,
+                    'role' => $e->role,
+                ])->values()->all(),
             ]);
 
         $subjects = Subject::query()->with(['department', 'classSubjects.teacher:id,name'])
@@ -54,15 +66,26 @@ class AcademicController extends Controller
                 'id' => $s->id, 'name' => $s->name, 'code' => $s->code,
                 'department_id' => $s->department_id, 'department' => $s->department?->name,
                 'classes_count' => $s->class_subjects_count, 'is_specialist' => (bool) $s->is_specialist,
+                'domain_kind' => $s->domain_kind,
                 'teachers' => $s->classSubjects->pluck('teacher.name')->filter()->unique()->values()->all(),
             ]);
 
         return Inertia::render('Academics/Index', array_merge($this->shellProps(), [
+            'academicBand' => $academicBand,
             'classes' => $classes,
             'subjects' => $subjects,
-            'levels' => Level::query()->orderBy('sort_order')->get(['id', 'name', 'code', 'teaching_model', 'grade_number'])
+            'levels' => Level::query()->orderBy('sort_order')->get()
                 ->map(fn (Level $l) => [
-                    'id' => $l->id, 'name' => $l->name, 'code' => $l->code, 'grade_number' => $l->grade_number,
+                    'id' => $l->id,
+                    'name' => $l->name,
+                    'code' => $l->code,
+                    'grade_number' => $l->grade_number,
+                    'age_min_months' => $l->age_min_months,
+                    'age_max_months' => $l->age_max_months,
+                    'description' => $l->description,
+                    'is_active' => (bool) $l->is_active,
+                    'teaching_arrangement' => $l->teaching_arrangement
+                        ?: ($l->teaching_model === 'specialist' ? 'specialist' : 'homeroom'),
                     'teaching_model' => app(HomeroomService::class)->modelFor($l),
                 ]),
             'departments' => Department::query()->with('head')->orderBy('name')->get()->map(fn ($d) => [
@@ -70,6 +93,7 @@ class AcademicController extends Controller
             ]),
             'teachers' => $this->teachingStaff(array_merge(
                 $classes->pluck('class_teacher_id')->all(),
+                $classes->flatMap(fn ($c) => collect($c['educators'])->pluck('user_id'))->all(),
                 Department::query()->whereNotNull('head_user_id')->pluck('head_user_id')->all(),
             )),
             'can' => ['manage' => $user->can('academics.manage')],
@@ -86,13 +110,26 @@ class AcademicController extends Controller
     public function storeLevel(Request $request, SetupWizard $wizard): RedirectResponse
     {
         $v = $request->validate([
-            'name' => ['required', 'string', 'max:100'], 'code' => ['nullable', 'string', 'max:20'],
+            'name' => ['required', 'string', 'max:100'],
+            'code' => ['nullable', 'string', 'max:20'],
             'teaching_model' => ['nullable', 'in:homeroom,specialist'],
+            'teaching_arrangement' => ['nullable', 'in:homeroom,activity,learning_centre,specialist'],
+            'age_min_months' => ['nullable', 'integer', 'min:0', 'max:216'],
+            'age_max_months' => ['nullable', 'integer', 'min:0', 'max:216'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
         $level = $wizard->addLevel(auth()->user()->school, $v['name'], $v['code'] ?? null);
-        if (! empty($v['teaching_model'])) {
-            $level->update(['teaching_model' => $v['teaching_model']]);
-        }
+        $arrangement = $v['teaching_arrangement']
+            ?? ((! empty($v['teaching_model']) && $v['teaching_model'] === 'specialist') ? 'specialist' : null);
+        $level->update(array_filter([
+            'teaching_arrangement' => $arrangement,
+            'teaching_model' => $arrangement === 'specialist' ? 'specialist' : ($v['teaching_model'] ?? null),
+            'age_min_months' => $v['age_min_months'] ?? null,
+            'age_max_months' => $v['age_max_months'] ?? null,
+            'description' => $v['description'] ?? null,
+            'is_active' => array_key_exists('is_active', $v) ? (bool) $v['is_active'] : true,
+        ], static fn ($x) => $x !== null));
 
         return back()->with('success', 'ok.saved');
     }
@@ -100,8 +137,28 @@ class AcademicController extends Controller
     public function updateLevel(Request $request, int $level): RedirectResponse
     {
         $record = Level::query()->findOrFail($level);
-        $v = $request->validate(['teaching_model' => ['required', 'in:homeroom,specialist']]);
-        $record->update(['teaching_model' => $v['teaching_model']]);
+        $v = $request->validate([
+            'teaching_model' => ['nullable', 'in:homeroom,specialist'],
+            'teaching_arrangement' => ['nullable', 'in:homeroom,activity,learning_centre,specialist'],
+            'age_min_months' => ['nullable', 'integer', 'min:0', 'max:216'],
+            'age_max_months' => ['nullable', 'integer', 'min:0', 'max:216'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'is_active' => ['nullable', 'boolean'],
+            'name' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $arrangement = $v['teaching_arrangement']
+            ?? ((! empty($v['teaching_model']) && $v['teaching_model'] === 'specialist') ? 'specialist' : ($v['teaching_model'] ?? $record->teaching_arrangement));
+
+        $record->update([
+            'name' => array_key_exists('name', $v) && $v['name'] ? trim($v['name']) : $record->name,
+            'teaching_arrangement' => $arrangement,
+            'teaching_model' => $arrangement === 'specialist' ? 'specialist' : 'homeroom',
+            'age_min_months' => array_key_exists('age_min_months', $v) ? $v['age_min_months'] : $record->age_min_months,
+            'age_max_months' => array_key_exists('age_max_months', $v) ? $v['age_max_months'] : $record->age_max_months,
+            'description' => array_key_exists('description', $v) ? $v['description'] : $record->description,
+            'is_active' => array_key_exists('is_active', $v) ? (bool) $v['is_active'] : $record->is_active,
+        ]);
 
         return back()->with('success', 'ok.saved');
     }
@@ -121,15 +178,30 @@ class AcademicController extends Controller
             'stream' => ['nullable', 'string', 'max:50'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'class_teacher_id' => ['nullable', $this->inSchool('users')],
+            'teaching_arrangement' => ['nullable', 'in:homeroom,activity,learning_centre,specialist'],
+            'learning_centres' => ['nullable', 'array'],
+            'learning_centres.*.key' => ['nullable', 'string', 'max:40'],
+            'learning_centres.*.name' => ['required_with:learning_centres', 'string', 'max:120'],
+            'learning_centres.*.active' => ['nullable', 'boolean'],
+            'assistant_ids' => ['nullable', 'array'],
+            'assistant_ids.*' => [$this->inSchool('users')],
+            'specialist_ids' => ['nullable', 'array'],
+            'specialist_ids.*' => [$this->inSchool('users')],
         ]);
         if (! empty($v['class_teacher_id']) && ! $this->teachingStaff([(int) $v['class_teacher_id']])->contains('id', (int) $v['class_teacher_id'])) {
             return back()->with('error', 'err.class.teacherInvalid')->withInput();
         }
         $class = $wizard->addClass(auth()->user()->school, (int) $v['level_id'], $v['name'], $v['stream'] ?? null, $v['capacity'] ?? null);
-        if (! empty($v['class_teacher_id'])) {
-            $class->update(['class_teacher_id' => $v['class_teacher_id']]);
-            app(HomeroomService::class)->applyClassTeacher($class->fresh(['level']));
-        }
+        $class->update([
+            'teaching_arrangement' => $v['teaching_arrangement'] ?? null,
+            'learning_centres' => $v['learning_centres'] ?? null,
+        ]);
+        $this->syncClassEducators(
+            $class->fresh(),
+            $v['class_teacher_id'] ?? null,
+            $v['assistant_ids'] ?? [],
+            $v['specialist_ids'] ?? []
+        );
 
         return back()->with('success', 'ok.saved');
     }
@@ -142,6 +214,15 @@ class AcademicController extends Controller
             'stream' => ['nullable', 'string', 'max:50'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'class_teacher_id' => ['nullable', $this->inSchool('users')],
+            'teaching_arrangement' => ['nullable', 'in:homeroom,activity,learning_centre,specialist'],
+            'learning_centres' => ['nullable', 'array'],
+            'learning_centres.*.key' => ['nullable', 'string', 'max:40'],
+            'learning_centres.*.name' => ['required_with:learning_centres', 'string', 'max:120'],
+            'learning_centres.*.active' => ['nullable', 'boolean'],
+            'assistant_ids' => ['nullable', 'array'],
+            'assistant_ids.*' => [$this->inSchool('users')],
+            'specialist_ids' => ['nullable', 'array'],
+            'specialist_ids.*' => [$this->inSchool('users')],
         ]);
 
         return $this->attempt(function () use ($record, $v) {
@@ -162,11 +243,63 @@ class AcademicController extends Controller
                 throw AcademicRuleException::because('err.name.taken');
             }
             $record->update([
-                'name' => trim($v['name']), 'stream' => $v['stream'] ?? null,
-                'capacity' => $v['capacity'] ?? null, 'class_teacher_id' => $v['class_teacher_id'] ?? null,
+                'name' => trim($v['name']),
+                'stream' => $v['stream'] ?? null,
+                'capacity' => $v['capacity'] ?? null,
+                'teaching_arrangement' => $v['teaching_arrangement'] ?? null,
+                'learning_centres' => $v['learning_centres'] ?? $record->learning_centres,
             ]);
-            app(HomeroomService::class)->applyClassTeacher($record->fresh(['level']));
+            $this->syncClassEducators(
+                $record->fresh(),
+                $v['class_teacher_id'] ?? null,
+                $v['assistant_ids'] ?? [],
+                $v['specialist_ids'] ?? []
+            );
         });
+    }
+
+    /**
+     * @param  list<int|string>  $assistantIds
+     * @param  list<int|string>  $specialistIds
+     */
+    protected function syncClassEducators(SchoolClass $class, int|string|null $leadId, array $assistantIds, array $specialistIds): void
+    {
+        $leadId = $leadId ? (int) $leadId : null;
+        $class->update(['class_teacher_id' => $leadId]);
+
+        ClassEducator::query()->where('school_class_id', $class->id)->delete();
+
+        if ($leadId) {
+            ClassEducator::query()->create([
+                'school_id' => $class->school_id,
+                'school_class_id' => $class->id,
+                'user_id' => $leadId,
+                'role' => ClassEducator::LEAD,
+            ]);
+            app(HomeroomService::class)->applyClassTeacher($class->fresh(['level']));
+        }
+
+        foreach (array_unique(array_map('intval', $assistantIds)) as $uid) {
+            if ($uid && $uid !== $leadId) {
+                ClassEducator::query()->create([
+                    'school_id' => $class->school_id,
+                    'school_class_id' => $class->id,
+                    'user_id' => $uid,
+                    'role' => ClassEducator::ASSISTANT,
+                ]);
+            }
+        }
+
+        foreach (array_unique(array_map('intval', $specialistIds)) as $uid) {
+            if ($uid && $uid !== $leadId) {
+                ClassEducator::query()->create([
+                    'school_id' => $class->school_id,
+                    'school_class_id' => $class->id,
+                    'user_id' => $uid,
+                    'role' => ClassEducator::SPECIALIST,
+                ]);
+            }
+        }
     }
 
     public function destroyClass(int $class, SetupWizard $wizard): RedirectResponse

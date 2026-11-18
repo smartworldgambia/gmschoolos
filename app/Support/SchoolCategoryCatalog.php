@@ -107,18 +107,45 @@ class SchoolCategoryCatalog
                     'code' => 'baby',
                     'description' => 'Gentle care and sensory play for our youngest children.',
                     'image' => '/images/marketing/hero-primary.jpg',
+                    'age_min_months' => 24,
+                    'age_max_months' => 36,
+                    'teaching_arrangement' => 'homeroom',
                 ],
                 [
                     'name' => 'Toddler',
                     'code' => 'toddler',
                     'description' => 'Discovery, language, and social skills through guided play.',
                     'image' => '/images/marketing/hero-classroom.jpg',
+                    'age_min_months' => 36,
+                    'age_max_months' => 48,
+                    'teaching_arrangement' => 'homeroom',
+                ],
+                [
+                    'name' => 'Nursery 1',
+                    'code' => 'n1',
+                    'description' => 'Early foundations in language, numeracy, and social learning.',
+                    'image' => '/images/marketing/hero-students.jpg',
+                    'age_min_months' => 48,
+                    'age_max_months' => 60,
+                    'teaching_arrangement' => 'activity',
+                ],
+                [
+                    'name' => 'Nursery 2',
+                    'code' => 'n2',
+                    'description' => 'Growing independence and readiness for reception.',
+                    'image' => '/images/marketing/hero-primary.jpg',
+                    'age_min_months' => 60,
+                    'age_max_months' => 72,
+                    'teaching_arrangement' => 'activity',
                 ],
                 [
                     'name' => 'Reception',
                     'code' => 'reception',
                     'description' => 'School readiness with literacy, numeracy, and confidence.',
                     'image' => '/images/marketing/hero-students.jpg',
+                    'age_min_months' => 60,
+                    'age_max_months' => 72,
+                    'teaching_arrangement' => 'learning_centre',
                 ],
             ],
             'primary' => [
@@ -201,6 +228,52 @@ class SchoolCategoryCatalog
             ],
             default => [],
         };
+    }
+
+    /**
+     * Proposed (non-official) ECD learning domains seeded as Subjects for nursery schools.
+     *
+     * @return list<array{name: string, code: string, description: string}>
+     */
+    public static function nurseryLearningDomains(): array
+    {
+        return [
+            [
+                'name' => 'Language and Literacy Development',
+                'code' => 'lang',
+                'description' => 'Listening, speaking, vocabulary, early reading and mark-making.',
+            ],
+            [
+                'name' => 'Numeracy and Mathematical Development',
+                'code' => 'num',
+                'description' => 'Counting, number concepts, shapes, patterns and measurement.',
+            ],
+            [
+                'name' => 'Social and Emotional Development',
+                'code' => 'sel',
+                'description' => 'Self-awareness, confidence, cooperation and self-regulation.',
+            ],
+            [
+                'name' => 'Physical and Motor Development',
+                'code' => 'phys',
+                'description' => 'Gross and fine motor skills, coordination, hygiene and self-care.',
+            ],
+            [
+                'name' => 'Creative and Artistic Development',
+                'code' => 'creat',
+                'description' => 'Drawing, music, dance, imaginative play and creative expression.',
+            ],
+            [
+                'name' => 'Knowledge and Understanding of the World',
+                'code' => 'world',
+                'description' => 'Family, community, nature, health, safety and cultural awareness.',
+            ],
+            [
+                'name' => 'Cognitive Development',
+                'code' => 'cog',
+                'description' => 'Observation, memory, concentration, reasoning and problem-solving.',
+            ],
+        ];
     }
 
     /**

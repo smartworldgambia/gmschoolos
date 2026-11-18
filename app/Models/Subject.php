@@ -9,7 +9,7 @@ class Subject extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'name', 'code', 'department_id', 'is_specialist'];
+    protected $fillable = ['school_id', 'name', 'code', 'department_id', 'is_specialist', 'domain_kind'];
 
     protected function casts(): array
     {
