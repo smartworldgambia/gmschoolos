@@ -16,6 +16,7 @@ use App\Models\Level;
 use App\Models\Payment;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\SchoolSubscription;
 use App\Models\Staff;
 use App\Models\Student;
 use App\Models\Subject;
@@ -26,9 +27,12 @@ use App\Services\Demo\DemoLoginProvisioner;
 use App\Services\Platform\QuotaService;
 use App\Services\Scale\CacheTuner;
 use App\Services\School\SchoolLandingProvisioner;
+use App\Support\DemoLoginCatalog;
+use App\Support\SchoolCategoryCatalog;
 use App\Support\TenantContext;
 use Database\Seeders\Concerns\DemoMailDomain;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -66,6 +70,9 @@ class SmartworldNurserySeeder extends Seeder
 
         $tenant->set($school);
 
+        // Drop leftover Grade/Form structure from earlier combined rich packs so Academics shows ECD only.
+        $this->purgeOutOfPackStructure($school);
+
         app(SchoolLandingProvisioner::class)->provision($school->fresh());
 
         $school->refresh();
@@ -73,6 +80,9 @@ class SmartworldNurserySeeder extends Seeder
             'tagline' => 'A caring start for every little learner',
             'about' => 'Smartworld Nursery is an early childhood centre in Kanifing focused on play-based learning, language and numeracy foundations, and a safe, nurturing environment for children from Baby Class through Reception.',
             'billing_email' => 'billing@smartworld.gm',
+            'website_published' => true,
+            'status' => 'active',
+            'suspended_at' => null,
             'settings' => array_merge($school->settings ?? [], [
                 'landing' => array_merge($school->settings['landing'] ?? [], [
                     'hero_headline' => 'Nurturing little learners with care and curiosity',
@@ -84,16 +94,13 @@ class SmartworldNurserySeeder extends Seeder
             ]),
         ]);
 
+        $host = 'smartworld.'.$baseDomain;
         Domain::query()->updateOrCreate(
-            ['host' => 'smartworld.'.$baseDomain],
+            ['host' => $host],
             ['school_id' => $school->id, 'is_primary' => true, 'is_custom' => false, 'ssl_active' => false]
         );
 
-        app(SubscriptionLifecycle::class)->startTrial(
-            $school,
-            (int) env('SCHOOLOS_DEMO_TRIAL_DAYS', 365),
-            'nursery'
-        );
+        $this->ensureNurseryTrial($school);
         app(QuotaService::class)->forSchool($school->fresh('subscription'));
 
         $users = app(DemoLoginProvisioner::class)->ensureSchool($school);
@@ -108,9 +115,102 @@ class SmartworldNurserySeeder extends Seeder
 
         app(CacheTuner::class)->forgetPublicSite($school->id);
         app(CacheTuner::class)->forgetAdminDashboard($school->id);
+
+        $levels = Level::query()->where('school_id', $school->id)->count();
+        $domains = Subject::query()->where('school_id', $school->id)->where('domain_kind', 'learning_domain')->count();
+        $rooms = SchoolClass::query()->where('school_id', $school->id)->count();
+        $kids = Student::query()->where('school_id', $school->id)->where('status', 'active')->count();
+
         app(TenantContext::class)->clear();
 
-        $this->command?->info('Smartworld Nursery ready (ECD levels, learning domains, classrooms, children).');
+        $this->command?->info('Smartworld Nursery ready.');
+        $this->command?->info("  Host:      https://{$host}");
+        $this->command?->info('  Site path: /sites/smartworld');
+        $this->command?->info('  Login:     admin@'.$host.' / '.DemoLoginCatalog::PASSWORD);
+        $this->command?->info("  Counts:    levels={$levels} domains={$domains} classes={$rooms} children={$kids}");
+    }
+
+    private function ensureNurseryTrial(School $school): void
+    {
+        $days = (int) env('SCHOOLOS_DEMO_TRIAL_DAYS', 365);
+        $existing = SchoolSubscription::query()->where('school_id', $school->id)->first();
+        if (! $existing) {
+            app(SubscriptionLifecycle::class)->startTrial($school, $days, 'nursery');
+
+            return;
+        }
+
+        $start = now();
+        $existing->forceFill([
+            'school_type' => 'nursery',
+            'status' => SchoolSubscription::TRIAL,
+            'payment_status' => 'not_required_during_trial',
+            'starts_at' => $existing->starts_at ?? $start,
+            'ends_at' => $start->copy()->addDays($days),
+            'trial_starts_at' => $existing->trial_starts_at ?? $start,
+            'trial_ends_at' => $start->copy()->addDays($days),
+            'suspended_at' => null,
+            'cancelled_at' => null,
+        ])->save();
+    }
+
+    /** Remove Grade/Form leftovers so the exclusive nursery pack is the only academic structure. */
+    private function purgeOutOfPackStructure(School $school): void
+    {
+        $allowed = SchoolCategoryCatalog::allowedLevelCodes($school) ?? [];
+        if ($allowed === []) {
+            return;
+        }
+
+        $allowedLookup = array_fill_keys($allowed, true);
+        $outLevels = Level::query()
+            ->where('school_id', $school->id)
+            ->get()
+            ->filter(fn (Level $level) => ! isset($allowedLookup[strtolower((string) $level->code)]));
+
+        if ($outLevels->isEmpty()) {
+            return;
+        }
+
+        $levelIds = $outLevels->pluck('id')->all();
+        $classIds = SchoolClass::query()
+            ->where('school_id', $school->id)
+            ->whereIn('level_id', $levelIds)
+            ->pluck('id')
+            ->all();
+
+        DB::transaction(function () use ($school, $levelIds, $classIds) {
+            if ($classIds !== []) {
+                $studentIds = Student::query()
+                    ->where('school_id', $school->id)
+                    ->whereIn('school_class_id', $classIds)
+                    ->pluck('id')
+                    ->all();
+
+                if ($studentIds !== []) {
+                    $invoiceIds = Invoice::query()
+                        ->where('school_id', $school->id)
+                        ->whereIn('student_id', $studentIds)
+                        ->pluck('id')
+                        ->all();
+                    if ($invoiceIds !== []) {
+                        Payment::query()->where('school_id', $school->id)->whereIn('invoice_id', $invoiceIds)->delete();
+                        InvoiceItem::query()->where('school_id', $school->id)->whereIn('invoice_id', $invoiceIds)->delete();
+                        Invoice::query()->where('school_id', $school->id)->whereIn('id', $invoiceIds)->delete();
+                    }
+                    AttendanceRecord::query()->where('school_id', $school->id)->whereIn('student_id', $studentIds)->delete();
+                    DB::table('student_guardians')->where('school_id', $school->id)->whereIn('student_id', $studentIds)->delete();
+                    Student::query()->where('school_id', $school->id)->whereIn('id', $studentIds)->delete();
+                }
+
+                ClassSubject::query()->where('school_id', $school->id)->whereIn('school_class_id', $classIds)->delete();
+                ClassEducator::query()->where('school_id', $school->id)->whereIn('school_class_id', $classIds)->delete();
+                AdmissionApplication::query()->where('school_id', $school->id)->whereIn('preferred_class_id', $classIds)->update(['preferred_class_id' => null]);
+                SchoolClass::query()->where('school_id', $school->id)->whereIn('id', $classIds)->delete();
+            }
+
+            Level::query()->where('school_id', $school->id)->whereIn('id', $levelIds)->delete();
+        });
     }
 
     /** @param  array<string, User>  $users */
@@ -408,7 +508,7 @@ class SmartworldNurserySeeder extends Seeder
         foreach ($children as $i => $child) {
             $total = (int) $tuition->amount + (int) $meals->amount;
             $paid = $i < 8 ? $total : ($i < 11 ? (int) ($total * 0.5) : 0);
-            $status = $paid >= $total ? 'paid' : ($paid > 0 ? 'partial' : 'pending');
+            $status = $paid >= $total ? 'paid' : ($paid > 0 ? 'partial' : 'issued');
 
             $invoice = Invoice::query()->updateOrCreate(
                 [
